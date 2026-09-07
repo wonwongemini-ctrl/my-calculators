@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공기업 서류전형 점수 계산기</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 45 920;
+}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#ffffff;
+  --panel:#fafafa;
+  --panel-2:#f3f3f1;
+  --line:#e3e1dc;
+  --text:#171512;
+  --text-dim:#5c584f;
+  --text-faint:#9b968a;
+  --accent:#c2410c;
+  --accent-soft:#fdece1;
+  --ok:#2f7a4d;
+  --ok-soft:#e9f5ee;
+  --warn:#b3261e;
+  --warn-soft:#fbe9e7;
+  --radius:4px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Pretendard', -apple-system, sans-serif;
+  font-weight:450;
+  line-height:1.55;
+  padding-bottom:80px;
+}
+
+.wrap{max-width:740px;margin:0 auto;padding:0 20px;}
+
+header{padding:48px 0 26px;border-bottom:1px solid var(--line);}
+.mark{width:34px;height:5px;background:var(--accent);margin-bottom:20px;border-radius:2px;}
+h1{font-size:1.75rem;font-weight:650;letter-spacing:-0.01em;margin:0 0 10px;}
+header p{color:var(--text-dim);font-size:0.94rem;max-width:58ch;margin:0 0 4px;}
+.src-note{font-size:0.78rem;color:var(--text-faint);margin-top:14px;}
+
+/* company tabs */
+.company-tabs{display:flex;gap:8px;padding:20px 0 0;}
+.company-tab{
+  flex:1;padding:13px 14px;border:1px solid var(--line);background:#fff;
+  border-radius:6px;cursor:pointer;text-align:left;font-family:'Pretendard',sans-serif;
+}
+.company-tab .c-name{font-size:0.94rem;font-weight:650;color:var(--text);}
+.company-tab .c-score{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--text-faint);margin-top:3px;}
+.company-tab.active{border-color:var(--accent);background:var(--accent-soft);}
+.company-tab.active .c-score{color:var(--accent);font-weight:650;}
+
+.gauge-bar{position:sticky;top:0;z-index:10;background:rgba(255,255,255,0.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:12px 0;}
+.gauge-inner{max-width:740px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:16px;}
+.gauge-label{font-size:0.78rem;color:var(--text-faint);white-space:nowrap;}
+.gauge-track{flex:1;height:7px;background:var(--panel-2);border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+.gauge-fill{height:100%;background:var(--accent);width:0%;transition:width .35s ease;}
+.gauge-value{font-family:'IBM Plex Mono',monospace;font-size:1.02rem;font-weight:600;white-space:nowrap;min-width:70px;text-align:right;}
+
+.company-panel{display:none;}
+.company-panel.active{display:block;}
+
+section{padding:32px 0;border-bottom:1px solid var(--line);}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px;}
+.sec-title{font-size:1.1rem;font-weight:650;}
+.sec-cap{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--text-faint);white-space:nowrap;}
+.sec-desc{color:var(--text-dim);font-size:0.85rem;margin:0 0 20px;}
+
+.field{margin-bottom:16px;}
+.field-row{display:flex;gap:12px;flex-wrap:wrap;}
+.field-row > .field{flex:1;min-width:180px;}
+label{display:block;font-size:0.83rem;color:var(--text-dim);margin-bottom:6px;}
+select, input[type=number]{
+  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
+  padding:9px 11px;border-radius:var(--radius);font-family:'Pretendard',sans-serif;font-size:0.92rem;
+}
+select:focus, input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+input[type=number]{font-family:'IBM Plex Mono',monospace;}
+.hint{font-size:0.78rem;color:var(--text-faint);margin-top:6px;}
+
+.toggle-group{display:flex;gap:8px;}
+.toggle-group button{
+  flex:1;padding:9px 12px;border:1px solid var(--line);background:#fff;color:var(--text-dim);
+  border-radius:var(--radius);cursor:pointer;font-family:'Pretendard',sans-serif;font-size:0.87rem;transition:all .15s ease;
+}
+.toggle-group button.active{background:var(--text);color:#fff;border-color:var(--text);font-weight:600;}
+.toggle-group button.active.ok-active{background:var(--ok);border-color:var(--ok);}
+
+/* accordion */
+.cert-category{border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden;}
+.cert-category > summary{
+  list-style:none;cursor:pointer;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  background:var(--panel);
+}
+.cert-category > summary::-webkit-details-marker{display:none;}
+.cert-category > summary .s-left{display:flex;flex-direction:column;gap:3px;}
+.cert-category > summary .s-title{font-size:0.95rem;font-weight:650;color:var(--text);}
+.cert-category > summary .s-cap{font-size:0.78rem;color:var(--text-faint);font-weight:450;}
+.cert-category > summary .s-right{display:flex;align-items:center;gap:10px;}
+.cert-category > summary .s-score{font-family:'IBM Plex Mono',monospace;font-size:0.88rem;font-weight:650;color:var(--text-faint);}
+.cert-category > summary .s-score.has-score{color:var(--accent);}
+.cert-category > summary .chev{color:var(--text-faint);font-size:0.7rem;transition:transform .18s ease;flex-shrink:0;}
+.cert-category[open] > summary .chev{transform:rotate(90deg);}
+.cert-category .cert-body{padding:6px 16px 16px;border-top:1px solid var(--line);}
+
+.cert-group{margin-top:16px;}
+.cert-group:first-child{margin-top:14px;}
+.cert-group-title{
+  font-size:0.82rem;font-weight:650;color:var(--text-dim);
+  display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:7px;margin-bottom:8px;border-bottom:1px solid var(--line);
+}
+.cert-list{display:flex;flex-direction:column;gap:2px;}
+.cert-item{
+  display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--radius);
+  cursor:pointer;font-size:0.87rem;color:var(--text-dim);
+}
+.cert-item:hover{background:var(--panel);}
+.cert-item input{width:16px;height:16px;flex-shrink:0;accent-color:var(--accent);}
+.cert-item .name{flex:1;}
+.cert-item .pt{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--text-faint);}
+.cert-item.counted{background:var(--accent-soft);color:var(--text);}
+.cert-item.counted .name{font-weight:600;}
+.cert-item.counted .pt{color:var(--accent);font-weight:600;}
+.cert-hint{font-size:0.78rem;color:var(--text-faint);margin-top:12px;}
+
+.subtotal{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;}
+.subtotal .lbl{font-size:0.87rem;color:var(--text-dim);}
+.subtotal .val{font-family:'IBM Plex Mono',monospace;font-size:1.25rem;font-weight:650;}
+.status-line{margin-top:10px;font-size:0.82rem;display:flex;align-items:center;gap:7px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot.ok{background:var(--ok);}
+.dot.warn{background:var(--warn);}
+.status-line.ok{color:var(--ok);}
+.status-line.warn{color:var(--warn);}
+
+/* final result */
+.final{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:26px 22px;}
+.total-rows{display:flex;flex-direction:column;gap:0;margin-bottom:8px;}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);}
+.total-row:last-child{border-bottom:none;}
+.total-row .t-lbl{font-size:0.9rem;color:var(--text-dim);}
+.total-row .t-sub{font-size:0.74rem;color:var(--text-faint);margin-top:2px;}
+.total-row .t-val{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:650;white-space:nowrap;}
+.total-row.pref .t-val{color:var(--accent);}
+
+.final-score{font-family:'IBM Plex Mono',monospace;font-size:2.9rem;font-weight:650;color:var(--accent);line-height:1;margin-top:14px;}
+.final-formula{color:var(--text-faint);font-size:0.78rem;margin-top:6px;}
+
+#logTable tbody tr{border-bottom:1px solid var(--line);}
+#logTable tbody tr:last-child{border-bottom:none;}
+#logTable td{padding:9px 6px;color:var(--text);vertical-align:top;}
+#logTable td.log-score{font-family:'IBM Plex Mono',monospace;font-weight:650;text-align:right;white-space:nowrap;}
+#logTable tr.log-pass td.log-score{color:var(--ok);}
+#logTable tr.log-fail td.log-score{color:var(--warn);}
+#logTable tr.log-pass{background:var(--ok-soft);}
+#logTable tr.log-fail{background:var(--warn-soft);}
+.log-del-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:0.9rem;padding:2px 6px;}
+.log-del-btn:hover{color:var(--warn);}
+
+footer{max-width:740px;margin:0 auto;padding:30px 20px 0;color:var(--text-faint);font-size:0.76rem;}
+button.reset{background:#fff;border:1px solid var(--line);color:var(--text-dim);padding:8px 16px;border-radius:var(--radius);cursor:pointer;font-size:0.82rem;font-family:'Pretendard',sans-serif;}
+button.reset:hover{border-color:var(--accent);color:var(--accent);}
+
+@media (max-width:520px){
+  h1{font-size:1.4rem;}
+  .final-score{font-size:2.2rem;}
+  .company-tabs{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<div class="gauge-bar">
+  <div class="gauge-inner">
+    <span class="gauge-label" id="gaugeLabel">지역난방공사 · 서류전형 총점</span>
+    <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+    <span class="gauge-value" id="gaugeValue">0.0</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="mark"></div>
+    <h1>공기업 서류전형 점수 계산기</h1>
+    <p>자격증과 어학 점수를 입력하면 서류전형 합계만 계산합니다. 공사별로 배점 방식이 달라 아래에서 대상 기관을 선택하세요.</p>
+    <div class="src-note">※ 공고문 원문(배점표·자격증 우대사항·어학성적 환산표) 기준 · 실제 합격 여부는 상대평가이므로 참고용입니다.</div>
+    <div class="company-tabs">
+      <div class="company-tab active" data-company="kdhc">
+        <div class="c-name">한국지역난방공사</div>
+        <div class="c-score" id="tabScoreKdhc">0.0 / 50</div>
+      </div>
+      <div class="company-tab" data-company="icn">
+        <div class="c-name">인천국제공항공사</div>
+        <div class="c-score" id="tabScoreIcn">0.0 / 100</div>
+      </div>
+      <div class="company-tab" data-company="kepco">
+        <div class="c-name">한국전력공사</div>
+        <div class="c-score" id="tabScoreKepco">0.0 / 120</div>
+      </div>
+      <div class="company-tab" data-company="kra">
+        <div class="c-name">한국마사회</div>
+        <div class="c-score" id="tabScoreKra">0.0점</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 한국지역난방공사 ================= -->
+  <div class="company-panel active" id="panel-kdhc">
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-title">서류전형 — 한국지역난방공사</span>
+        <span class="sec-cap">가점 50점 만점</span>
+      </div>
+      <p class="sec-desc">공통자격 10점 + 직무자격 30점 + 외국어 10점 + 우대가점. 카테고리를 눌러 펼친 뒤 보유 자격증을 체크하세요.</p>
+
+      <div class="field">
+        <label>자기소개서 결과</label>
+        <div class="toggle-group" id="kdhcCover">
+          <button data-val="pass" class="active ok-active">적격</button>
+          <button data-val="fail">부적격 (자동 불합격)</button>
+        </div>
+      </div>
+
+      <div id="kdhcCertAccordionRoot"></div>
+
+      <div class="field" style="margin-top:22px;">
+        <label for="kdhcToeic">외국어 — TOEIC 환산점수 (0~990, 최대 10점)</label>
+        <input type="number" id="kdhcToeic" min="0" max="990" step="1" placeholder="예: 975">
+      </div>
+
+      <div class="field">
+        <label for="kdhcPreference">채용 우대가점 (2개 이상 해당 시 최상위 1개만 인정)</label>
+        <select id="kdhcPreference">
+          <option value="0">해당 없음</option>
+          <option value="10">취업지원(보훈)대상자 — 서류전형 만점의 10%</option>
+          <option value="5">취업지원(보훈)대상자 — 서류전형 만점의 5%</option>
+          <option value="10-d">장애인 (중증) — 서류전형 만점의 10%</option>
+          <option value="5-d">장애인 — 서류전형 만점의 5%</option>
+          <option value="5-b">기초생활수급자 — 서류전형 만점의 5%</option>
+          <option value="5-n">북한이탈주민 — 서류전형 만점의 5%</option>
+          <option value="5-m">다문화가정의 자녀 — 서류전형 만점의 5%</option>
+          <option value="5-c">자립준비청년 — 서류전형 만점의 5%</option>
+        </select>
+      </div>
+      <div class="hint" id="kdhcBohunNote" style="display:none;">※ 보훈 가점은 모집단위 채용예정인원 4인 이상(또는 예외조건 충족) 시에만 적용됩니다. 조건을 충족한다는 전제로 계산됩니다.</div>
+
+      <div class="final" style="margin-top:22px;">
+        <div class="total-rows">
+          <div class="total-row">
+            <div><div class="t-lbl">공통자격 + 직무자격 + 외국어</div><div class="t-sub">50점 만점</div></div>
+            <div class="t-val" id="kdhcRawScore">0.0</div>
+          </div>
+          <div class="total-row pref">
+            <div><div class="t-lbl">우대가점</div><div class="t-sub" id="kdhcPrefSub">해당 없음</div></div>
+            <div class="t-val" id="kdhcPrefPoints">+0.0</div>
+          </div>
+        </div>
+        <div class="final-score" id="kdhcFinalScore">0.0</div>
+        <div class="final-formula">서류전형 총점 = 자격·외국어 가점(50점 만점) + 우대가점(만점의 %)</div>
+        <div class="field" style="margin-top:14px;margin-bottom:0;">
+          <label for="kdhcNote">비고 (선택)</label>
+          <input type="text" id="kdhcNote" placeholder="예: 합격 / 불합격">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="reset" id="kdhcLogBtn" type="button" style="border-color:var(--accent);color:var(--accent);">기록에 추가</button>
+          <button class="reset" id="kdhcResetBtn" type="button">초기화</button>
+        </div>
+        <div class="status-line" id="kdhcCoverStatus" style="margin-top:16px;"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= 인천국제공항공사 ================= -->
+  <div class="company-panel" id="panel-icn">
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-title">서류전형 — 인천국제공항공사 (일반직 5급)</span>
+        <span class="sec-cap">100점 만점</span>
+      </div>
+      <p class="sec-desc">공인어학성적 + 우대사항(자격증·어학 Speaking·보훈)으로 구성됩니다. 붙임1(자격증)·붙임2(Speaking)·붙임4(어학성적 환산표) 기준입니다.</p>
+
+      <div class="field">
+        <label>응시자격 충족 여부</label>
+        <div class="toggle-group" id="icnEligible">
+          <button data-val="pass" class="active ok-active">적격</button>
+          <button data-val="fail">부적격 (자동 불합격)</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="icnToeic">TOEIC 환산점수 (0~990)</label>
+        <input type="number" id="icnToeic" min="0" max="990" step="1" placeholder="예: 900">
+        <div class="hint">TOEIC 외 시험(TEPS·TOEFL·OPIc 등)은 붙임4 환산표로 TOEIC 기준 점수로 먼저 바꾼 뒤 입력하세요. 100점 만점 점수는 <b>TOEIC환산점수 ÷ 990 × 100</b>으로 자동 계산됩니다 — 공식 환산식이 명시된 공고문을 못 찾아 KEPCO 등 유사 공기업 방식을 참고한 추정치이니, 실제 지원 전 공고문 붙임자료로 한 번 더 확인하세요.</div>
+      </div>
+      <div class="field">
+        <label>공인어학성적 환산점수 (자동 계산, 100점 만점)</label>
+        <input type="text" id="icnBaseScore" disabled style="background:var(--panel-2);color:var(--text);">
+      </div>
+
+      <div id="icnCertAccordionRoot"></div>
+
+      <div class="field" style="margin-top:22px;">
+        <label for="icnSpeaking">어학 Speaking 성적 우대가점 (붙임2, 서류전형 한정)</label>
+        <select id="icnSpeaking">
+          <option value="0">해당 없음</option>
+          <option value="2">스피킹 2%</option>
+          <option value="1">스피킹 1%</option>
+        </select>
+        <div class="hint">
+          <b>스피킹 2%</b>: 토익스피킹 AM·AH(영어) · OPIc AL(영어·스페인어·러시아어) · OPI AL(독일어·프랑스어) · HSK회화 고급·BCT말하기 431~500·TSC Lv9 이상(중국어) · SJPT Level8 이상(일본어)<br>
+          <b>스피킹 1%</b>: 토익스피킹 AL(영어) · OPIc IH(영어·스페인어·러시아어) · OPI IH(독일어·프랑스어) · HSK회화 중급 상당(중국어)
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="icnBohun">취업지원(보훈)대상자 가점</label>
+        <select id="icnBohun">
+          <option value="0">해당 없음</option>
+          <option value="5">5% (관계법령 기준)</option>
+          <option value="10">10% (관계법령 기준)</option>
+        </select>
+      </div>
+
+      <div class="final" style="margin-top:22px;">
+        <div class="total-rows">
+          <div class="total-row">
+            <div><div class="t-lbl">공인어학성적 기준점수</div><div class="t-sub">직접 입력값</div></div>
+            <div class="t-val" id="icnBaseDisplay">0.0</div>
+          </div>
+          <div class="total-row pref">
+            <div><div class="t-lbl">자격증 우대가점</div><div class="t-sub" id="icnCertSub">해당 없음</div></div>
+            <div class="t-val" id="icnCertPoints">+0.0</div>
+          </div>
+          <div class="total-row pref">
+            <div><div class="t-lbl">어학 Speaking 가점</div><div class="t-sub">붙임2</div></div>
+            <div class="t-val" id="icnSpeakingPoints">+0.0</div>
+          </div>
+          <div class="total-row pref">
+            <div><div class="t-lbl">보훈 가점</div><div class="t-sub">관계법령</div></div>
+            <div class="t-val" id="icnBohunPoints">+0.0</div>
+          </div>
+        </div>
+        <div class="final-score" id="icnFinalScore">0.0</div>
+        <div class="final-formula">서류전형 총점 = 공인어학성적 기준점수 + (자격증·Speaking·보훈 가점 중 각 최고 1개씩 합산, 만점의 %)</div>
+        <div class="field" style="margin-top:14px;margin-bottom:0;">
+          <label for="icnNote">비고 (선택)</label>
+          <input type="text" id="icnNote" placeholder="예: 합격 / 불합격">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="reset" id="icnLogBtn" type="button" style="border-color:var(--accent);color:var(--accent);">기록에 추가</button>
+          <button class="reset" id="icnResetBtn" type="button">초기화</button>
+        </div>
+        <div class="status-line" id="icnEligibleStatus" style="margin-top:16px;"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= 한국전력공사 (사무) ================= -->
+  <div class="company-panel" id="panel-kepco">
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-title">서류전형 — 한국전력공사 (사무, 4직급 대졸수준)</span>
+        <span class="sec-cap">120점 만점 (외국어 100 + 자격증가점 20)</span>
+      </div>
+      <p class="sec-desc">외국어성적(100점) + 자격증 가점(붙임5, 최대 20점) + 우대가점으로 구성됩니다. 사무직군은 계열별(배전·ICT·토목 등) 직무자격증표가 아닌 공통 가점표만 적용돼요.</p>
+
+      <div class="field">
+        <label>지원자격 충족 여부 (외국어 TOEIC 700점 이상 등)</label>
+        <div class="toggle-group" id="kepcoEligible">
+          <button data-val="pass" class="active ok-active">적격</button>
+          <button data-val="fail">부적격 (지원 불가)</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="kepcoToeic">외국어 — TOEIC 환산점수 (0~990)</label>
+        <input type="number" id="kepcoToeic" min="0" max="990" step="1" placeholder="예: 900">
+        <div class="hint">외국어점수 = (TOEIC 환산점수 ÷ 850) × 100, 100점 만점 상한. 고급자격증(변호사·변리사·공인노무사·공인회계사·세무사·AICPA·기술사·건축사) 보유자는 외국어성적이 면제되며 자동으로 만점 처리됩니다.</div>
+      </div>
+
+      <div id="kepcoCertAccordionRoot"></div>
+
+      <div class="field" style="margin-top:22px;">
+        <label for="kepcoPreference">채용 우대사항 (붙임6, 중복 시 최상위 1개만 인정)</label>
+        <select id="kepcoPreference">
+          <option value="none|0">해당 없음</option>
+          <option value="exempt|취업지원(보훈)대상자">취업지원(보훈)대상자 — 1차(서류)전형 면제</option>
+          <option value="exempt|장애인">장애인 — 1차(서류)전형 면제</option>
+          <option value="exempt|고급자격증 보유자">고급자격증 보유자 — 1차(서류)전형 면제 (외국어성적도 면제)</option>
+          <option value="exempt|기초생활수급자">기초생활수급자 — 1차(서류)전형 면제</option>
+          <option value="exempt|자립준비청년">자립준비청년 — 1차(서류)전형 면제</option>
+          <option value="exempt|공공데이터 아이디어 경진대회 대상">공공데이터활용 아이디어 경진대회 대상 — 1차(서류)전형 면제</option>
+          <option value="exempt|발명기술혁신대전 금상">한전 발명기술혁신대전 금상 — 1차(서류)전형 면제</option>
+          <option value="pct|10|한전 기간제 근로자(1년 이상)">한전 기간제 근로자 (1년 이상 근무) — 서류전형 10% 가점</option>
+          <option value="pct|10|시간선택제 근로자">시간선택제 근로자 — 서류전형 10% 가점</option>
+          <option value="pct|10|KEPCO 프렌즈 우수활동자">KEPCO 프렌즈 우수활동자 — 서류전형 10% 가점</option>
+          <option value="pct|10|공공데이터 아이디어 경진대회 최우수상">공공데이터활용 아이디어 경진대회 최우수상 — 서류전형 10% 가점</option>
+          <option value="pct|10|발명기술혁신대전 은상·동상">한전 발명기술혁신대전 은상·동상 — 서류전형 10% 가점</option>
+          <option value="pct|10|청년청렴Auditor 우수활동자">한전 청년청렴 Auditor 우수활동자 — 서류전형 10% 가점</option>
+          <option value="pct|5|한전 기간제 근로자(6개월~1년 미만)">한전 기간제 근로자 (6개월~1년 미만) — 서류전형 5% 가점</option>
+          <option value="pct|5|장애인 인턴(12개월 이상)">한전 장애인 인턴 (12개월 이상 근무) — 서류전형 5% 가점</option>
+          <option value="pct|5|북한이탈주민·다문화가족">북한이탈주민·다문화가족 — 서류전형 5% 가점</option>
+          <option value="pct|3|본사 이전지역인재(광주전남)">본사 이전지역인재 (광주·전남) — 서류전형 3% 가점</option>
+          <option value="pct|1|비수도권 지역인재">비수도권 지역인재 — 서류전형 1% 가점</option>
+        </select>
+        <div class="hint">"면제"는 점수와 무관하게 1차 서류전형을 자동 통과하는 항목이고, "%가점"은 서류전형 총점(120점 만점)에 곱해서 더해집니다. 한전 체험형인턴 가점은 최근 기수부터 2차(필기)전형에 적용되어 이 계산기(서류전형)에는 포함하지 않았어요.</div>
+      </div>
+
+      <div class="final" style="margin-top:22px;">
+        <div class="total-rows">
+          <div class="total-row">
+            <div><div class="t-lbl">외국어성적</div><div class="t-sub">100점 만점</div></div>
+            <div class="t-val" id="kepcoLangScore">0.0</div>
+          </div>
+          <div class="total-row">
+            <div><div class="t-lbl">자격증 가점</div><div class="t-sub" id="kepcoCertSub">해당 없음</div></div>
+            <div class="t-val" id="kepcoCertScore">0.0</div>
+          </div>
+          <div class="total-row pref">
+            <div><div class="t-lbl">우대사항</div><div class="t-sub" id="kepcoPrefSub">해당 없음</div></div>
+            <div class="t-val" id="kepcoPrefPoints">+0.0</div>
+          </div>
+        </div>
+        <div class="final-score" id="kepcoFinalScore">0.0</div>
+        <div class="final-formula">서류전형 총점 = 외국어성적(100) + 자격증가점(20) + 우대가점(120점 만점의 %) · 사무 전원합격 커트라인 120점</div>
+        <div class="field" style="margin-top:14px;margin-bottom:0;">
+          <label for="kepcoNote">비고 (선택)</label>
+          <input type="text" id="kepcoNote" placeholder="예: 합격 / 불합격">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="reset" id="kepcoLogBtn" type="button" style="border-color:var(--accent);color:var(--accent);">기록에 추가</button>
+          <button class="reset" id="kepcoResetBtn" type="button">초기화</button>
+        </div>
+        <div class="status-line" id="kepcoEligibleStatus" style="margin-top:16px;"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= 한국마사회 (사무직) ================= -->
+  <div class="company-panel" id="panel-kra">
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-title">서류전형 — 한국마사회 (사무직, 5급)</span>
+        <span class="sec-cap">100 + Σ(100점의 N%)</span>
+      </div>
+      <p class="sec-desc">1단계 적격심사(100점, 적/부)를 통과하면 기본 100점이 부여되고, 채용예정인원 50배수를 초과할 경우 우대사항 항목별 가점(서류전형 만점 100점의 N%)을 더해서 다시 줄을 세웁니다. 사회형평·공통역량·기타경력·직무역량 4개 그룹은 물론, 같은 그룹 안에서도 서로 다른 자격증이면 각각 중복 합산돼요(동일 자격증은 상위 등급만 인정).</p>
+
+      <div class="field">
+        <label>1단계 적격심사 (응시자격 충족 여부)</label>
+        <div class="toggle-group" id="kraEligible">
+          <button data-val="pass" class="active ok-active">적격</button>
+          <button data-val="fail">부적격 (자동 불합격)</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="kraJob">세부 직무 (직무역량 우대사항에 반영)</label>
+        <select id="kraJob">
+          <option value="ga">일반행정 (장애인·보훈·지역인재·사회형평 포함)</option>
+          <option value="safety">산업안전보건관리</option>
+          <option value="jg">재경</option>
+          <option value="lm">법무</option>
+        </select>
+      </div>
+
+      <div class="checkbox-line">
+        <input type="checkbox" id="kraExempt">
+        <label for="kraExempt" style="margin:0;">사무직 공통 서류전형 면제 자격증(변호사·법무사·공인노무사·공인회계사·세무사·감정평가사) 보유 — 서류전형 면제(합격배수 외 추가 합격 처리)</label>
+      </div>
+
+      <div id="kraCertAccordionRoot" style="margin-top:20px;"></div>
+
+      <div class="final" style="margin-top:22px;">
+        <div class="total-rows">
+          <div class="total-row">
+            <div><div class="t-lbl">1단계 적격심사 기본점수</div></div>
+            <div class="t-val" id="kraBaseScore">0.0</div>
+          </div>
+          <div class="total-row">
+            <div><div class="t-lbl">➊ 사회형평</div></div>
+            <div class="t-val" id="kraSocialScore">0.0</div>
+          </div>
+          <div class="total-row">
+            <div><div class="t-lbl">➋ 공통역량</div></div>
+            <div class="t-val" id="kraCommonScore">0.0</div>
+          </div>
+          <div class="total-row">
+            <div><div class="t-lbl">➌ 기타경력</div></div>
+            <div class="t-val" id="kraCareerScore">0.0</div>
+          </div>
+          <div class="total-row">
+            <div><div class="t-lbl">➍ 직무역량</div></div>
+            <div class="t-val" id="kraJobScore">0.0</div>
+          </div>
+        </div>
+        <div class="final-score" id="kraFinalScore">0.0</div>
+        <div class="final-formula">서류전형 총점 = 100(1단계 적격) + 100 × Σ(2단계 가점 %) · 채용예정인원 50배수 이내면 적격자 전원 통과</div>
+        <div class="field" style="margin-top:14px;margin-bottom:0;">
+          <label for="kraNote">비고 (선택)</label>
+          <input type="text" id="kraNote" placeholder="예: 합격 / 불합격">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="reset" id="kraLogBtn" type="button" style="border-color:var(--accent);color:var(--accent);">기록에 추가</button>
+          <button class="reset" id="kraResetBtn" type="button">초기화</button>
+        </div>
+        <div class="status-line" id="kraEligibleStatus" style="margin-top:16px;"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= 스펙 기록 (합격/불합격 누적) ================= -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-title">스펙 기록</span>
+      <span class="sec-cap">카페·후기 스펙 누적 기록</span>
+    </div>
+    <p class="sec-desc">위 결과 카드의 "기록에 추가" 버튼을 누르면, 지금 입력한 자격증 내용을 요약해서 아래 연도·점수와 함께 자동으로 표에 쌓입니다. 비고는 카드에 직접 입력한 경우에만 포함돼요.</p>
+
+    <div class="field" style="max-width:160px;">
+      <label for="logYear">기록 연도</label>
+      <input type="number" id="logYear" min="2000" max="2100" step="1">
+    </div>
+
+    <div id="icnLogControls" style="display:none;">
+      <div class="field" style="max-width:420px;">
+        <label>인천국제공항공사 등위 계산 방식</label>
+        <div class="toggle-group" id="icnRankMode">
+          <button data-val="sum" class="active">합산 방식 (100 초과 허용)</button>
+          <button data-val="cap100">100점 캡 + 동점자 처리 (가설)</button>
+        </div>
+        <div class="hint">"합산 방식"은 점수를 그대로 더해 비교하고, 진짜 점수가 같을 때만 동점자 처리기준을 적용해요. "100점 캡" 방식은 점수를 100점에서 자른 뒤, 100을 넘는 사람들을 전부 동점으로 보고 동점자 처리기준(보훈→자격증→스피킹→어학점수)으로 등위를 매깁니다 — 아직 공식 확인은 안 된 가설이니 참고용으로만 보세요.</div>
+      </div>
+
+      <div class="field" style="max-width:420px;">
+        <label>동점자 처리 — 자격증 비교 방식</label>
+        <div class="toggle-group" id="icnCertTiebreakMode">
+          <button data-val="sum" class="active">합산액 비교</button>
+          <button data-val="max">최고 등급 우선</button>
+        </div>
+        <div class="hint">"합산액 비교"는 공통+사무 가점을 더한 값으로 비교하고, "최고 등급 우선"은 10% 보유자를 먼저 다 뽑고, 그 다음 5% 보유자, 그 다음 3% 보유자 순으로 비교해요(같은 등급끼리는 그 다음 기준으로 넘어감). 두 방식 다 실제 합불 사례랑 맞는지 비교해보는 용도예요.</div>
+      </div>
+    </div>
+
+    <div id="logTableWrap">
+      <div id="logCaptureArea" style="background:#fff;padding:4px;">
+        <div style="font-size:0.82rem;font-weight:650;color:var(--text-dim);margin-bottom:10px;" id="logCaptureTitle">스펙 기록</div>
+        <table id="logTable" style="width:100%;border-collapse:collapse;font-size:0.84rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--line);">
+              <th style="text-align:center;padding:8px 6px;color:var(--text-faint);font-weight:600;width:40px;">등위</th>
+              <th style="text-align:left;padding:8px 6px;color:var(--text-faint);font-weight:600;">연도</th>
+              <th style="text-align:left;padding:8px 6px;color:var(--text-faint);font-weight:600;">기관</th>
+              <th style="text-align:left;padding:8px 6px;color:var(--text-faint);font-weight:600;">자격 스펙</th>
+              <th style="text-align:left;padding:8px 6px;color:var(--text-faint);font-weight:600;">비고</th>
+              <th style="text-align:right;padding:8px 6px;color:var(--text-faint);font-weight:600;">점수</th>
+              <th style="width:28px;" class="log-del-col"></th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody">
+            <tr id="logEmptyRow"><td colspan="7" style="padding:16px 6px;color:var(--text-faint);text-align:center;">아직 기록된 스펙이 없습니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="reset" id="logImageBtn" type="button" style="margin-top:16px;">스펙 기록 이미지로 저장</button>
+    <div class="hint" id="logImageHint" style="margin-top:8px;"></div>
+  </section>
+
+  <footer>
+    <p>본 계산기는 각 공사 공고문에 기재된 서류전형 산식만 구현한 참고용 도구입니다. 인천국제공항공사의 공인어학성적 100점 환산 공식은 업로드된 자료에 포함되어 있지 않아 직접 입력값을 사용하며, 자격증·우대가점 항목은 공고문 붙임1·붙임2 기준입니다. 스펙 기록은 이 페이지에 계속 저장되며, 각 회사의 "초기화" 버튼은 자격사항 입력값만 지우고 스펙 기록은 그대로 둡니다. 정확한 판단은 반드시 원본 공고문을 기준으로 하세요.</p>
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// =================================================================
+// 한국지역난방공사 — 자격증 데이터 (첨부5, 사무직군)
+// =================================================================
+const KDHC_COMMON_CERTS = [
+  { group:'한국사 (최대 3점)', family:'hanguksa', label:'한국사능력검정시험 1급', points:3 },
+  { group:'한국사 (최대 3점)', family:'hanguksa', label:'한국사능력검정시험 2급', points:2 },
+  { group:'한국사 (최대 3점)', family:'hanguksa', label:'한국사능력검정시험 3급', points:1 },
+  { group:'한국어 (최대 3점)', family:'hangugeo', label:'국어능력인증시험 · KBS한국어능력시험 · 한국실용글쓰기검정 1급', points:3 },
+  { group:'한국어 (최대 3점)', family:'hangugeo', label:'국어능력인증시험 2급 · KBS한국어능력시험 2급 · 한국실용글쓰기검정 2급', points:2 },
+  { group:'한국어 (최대 3점)', family:'hangugeo', label:'국어능력인증시험 3급 · KBS한국어능력시험 3+급 · 한국실용글쓰기검정 준2급', points:1 },
+  { group:'OA (최대 4점)', family:'oa', label:'컴퓨터활용능력 1급 · 정보처리기사', points:4 },
+  { group:'OA (최대 4점)', family:'oa', label:'컴퓨터활용능력 2급 · 정보처리산업기사 · 사무자동화산업기사', points:2 },
+];
+
+const KDHC_JOB_CERTS = [
+  { group:'고급 — 30점', family:'cpa', label:'공인회계사', points:30 },
+  { group:'고급 — 30점', family:'semusa', label:'세무사', points:30 },
+  { group:'고급 — 30점', family:'gwansesa', label:'관세사', points:30 },
+  { group:'고급 — 30점', family:'nomusa', label:'공인노무사', points:30 },
+
+  { group:'상급 — 15점', family:'jeonsansemu', label:'전산세무 1급', points:15 },
+  { group:'상급 — 15점', family:'semuhoegye', label:'세무회계 1급', points:15 },
+  { group:'상급 — 15점', family:'gieophoegye', label:'기업회계 1급', points:15 },
+  { group:'상급 — 15점', family:'tat', label:'TAT 1급', points:15 },
+  { group:'상급 — 15점', family:'ifrs', label:'IFRS 관리사', points:15 },
+  { group:'상급 — 15점', family:'jaemugwalli', label:'재무관리사 1급', points:15 },
+  { group:'상급 — 15점', family:'gyeongyeongjidosa', label:'경영지도사(재무관리)', points:15 },
+
+  { group:'상급 — 10점', family:'jaegyeonggwalli', label:'재경관리사', points:10 },
+  { group:'상급 — 10점', family:'jeonsansemu', label:'전산세무 2급', points:10 },
+  { group:'상급 — 10점', family:'tat', label:'TAT 2급', points:10 },
+  { group:'상급 — 10점', family:'jaemugwalli', label:'재무관리사 2급', points:10 },
+  { group:'상급 — 10점', family:'wongabunseok', label:'원가분석사', points:10 },
+  { group:'상급 — 10점', family:'jeonsanhoegyeunyong', label:'전산회계운용사 1급', points:10 },
+  { group:'상급 — 10점', family:'erp', label:'ERP정보관리사(회계,인사) 1급', points:10 },
+  { group:'상급 — 10점', family:'sahoejosa', label:'사회조사분석사 1급', points:10 },
+  { group:'상급 — 10점', family:'tesat', label:'TESAT S급', points:10 },
+
+  { group:'중급 — 5점', family:'semuhoegye', label:'세무회계 2급', points:5 },
+  { group:'중급 — 5점', family:'gieophoegye', label:'기업회계 2급', points:5 },
+  { group:'중급 — 5점', family:'gukjehoegye', label:'국제회계전문가', points:5 },
+  { group:'중급 — 5점', family:'gonggonghoegye', label:'공공회계전문가', points:5 },
+  { group:'중급 — 5점', family:'jeonsanhoegye', label:'전산회계 1급', points:5 },
+  { group:'중급 — 5점', family:'fat', label:'FAT 1급', points:5 },
+  { group:'중급 — 5점', family:'hoegyegwalli', label:'회계관리 1급', points:5 },
+  { group:'중급 — 5점', family:'jeonsanhoegyeunyong', label:'전산회계운용사 2급', points:5 },
+  { group:'중급 — 5점', family:'sahoejosa', label:'사회조사분석사 2급', points:5 },
+  { group:'중급 — 5점', family:'tesat', label:'TESAT 1급', points:5 },
+
+  { group:'초급 — 3점', family:'semuhoegye', label:'세무회계 3급', points:3 },
+  { group:'초급 — 3점', family:'gieophoegye', label:'기업회계 3급', points:3 },
+  { group:'초급 — 3점', family:'jeonsanhoegye', label:'전산회계 2급', points:3 },
+  { group:'초급 — 3점', family:'fat', label:'FAT 2급', points:3 },
+  { group:'초급 — 3점', family:'hoegyegwalli', label:'회계관리 2급', points:3 },
+  { group:'초급 — 3점', family:'jeonsanhoegyeunyong', label:'전산회계운용사 3급', points:3 },
+  { group:'초급 — 3점', family:'erp', label:'ERP회계정보관리사(회계,인사) 2급', points:3 },
+  { group:'초급 — 3점', family:'tesat', label:'TESAT 2급', points:3 },
+];
+
+// =================================================================
+// 인천국제공항공사 — 자격증 우대사항 (붙임1, 공통/사무 분야)
+// =================================================================
+const ICN_CERTS = [
+  { group:'공통 3%', family:'common', pct:3, label:'한국사능력검정시험 2급 이상' },
+
+  { group:'자격증 10%', family:'office', pct:10, label:'변호사' },
+  { group:'자격증 10%', family:'office', pct:10, label:'변리사' },
+  { group:'자격증 10%', family:'office', pct:10, label:'공인회계사' },
+  { group:'자격증 10%', family:'office', pct:10, label:'세무사' },
+  { group:'자격증 10%', family:'office', pct:10, label:'CFA(재무분석사, Level3)' },
+  { group:'자격증 10%', family:'office', pct:10, label:'감정평가사' },
+  { group:'자격증 10%', family:'office', pct:10, label:'공인노무사' },
+
+  { group:'자격증 5%', family:'office', pct:5, label:'KBS한국어능력시험 2+급 이상' },
+  { group:'자격증 5%', family:'office', pct:5, label:'국어능력인증시험 2급 이상' },
+  { group:'자격증 5%', family:'office', pct:5, label:'컴퓨터활용능력 1급' },
+  { group:'자격증 5%', family:'office', pct:5, label:'전산세무 1급' },
+  { group:'자격증 5%', family:'office', pct:5, label:'CFA(재무분석사, Level2)' },
+  { group:'자격증 5%', family:'office', pct:5, label:'사회조사분석사 1급' },
+
+  { group:'자격증 3%', family:'office', pct:3, label:'KBS한국어능력시험 3+급 이상' },
+  { group:'자격증 3%', family:'office', pct:3, label:'국어능력인증시험 3급' },
+  { group:'자격증 3%', family:'office', pct:3, label:'컴퓨터활용능력 2급' },
+  { group:'자격증 3%', family:'office', pct:3, label:'전산회계 1급' },
+  { group:'자격증 3%', family:'office', pct:3, label:'사회조사분석사 2급' },
+];
+
+// =================================================================
+// 한국전력공사 — 자격증 가점 (붙임5, 공통 가점표 · 사무직군)
+// =================================================================
+const KEPCO_CERTS = [
+  { group:'한국사 — 5점', family:'hanguksa', label:'한국사능력검정시험 3급 이상', points:5 },
+
+  { group:'국어능력 — 5점', family:'gugeo', label:'국어능력인증시험 3급 이상', points:5 },
+  { group:'국어능력 — 5점', family:'gugeo', label:'KBS한국어능력시험 3+급 이상', points:5 },
+  { group:'국어능력 — 5점', family:'gugeo', label:'한국실용글쓰기검정 준2급 이상', points:5 },
+
+  { group:'IT 분야 — 5점', family:'it', label:'정보처리기사 · 정보처리산업기사', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'사무자동화산업기사', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'컴퓨터활용능력 1급', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'ADsP · ADP · DAP', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'SQLP · SQLD', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'COS Pro 1~2급', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'PCCP Lv2~5', points:5 },
+  { group:'IT 분야 — 5점', family:'it', label:'DAsP', points:5 },
+
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'토익스피킹 AL 이상 (영어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'OPIc IH 이상 (영어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'DELF B2 이상 · DALF C1 이상 (프랑스어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'독일어능력시험 B2 이상 (독일어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'FLEX 2A 이상 · OPIc IM2 이상 (러시아어·베트남어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'FLEX 2A 이상 · OPIc IM2 이상 · DELE B2 이상 (스페인어)', points:5 },
+  { group:'외국어구사능력 — 5점', family:'speaking', label:'FLEX 2A 이상 (아랍어·인도네시아어)', points:5 },
+];
+
+// =================================================================
+// 한국마사회 — 서류전형 우대사항 (사무직, ➊~➍)
+// =================================================================
+const KRA_SOCIAL = [
+  { group:'취업지원(보훈)대상자', family:'bohun', label:'취업지원(보훈)대상자 — 5%', points:5 },
+  { group:'취업지원(보훈)대상자', family:'bohun', label:'취업지원(보훈)대상자 — 10%', points:10 },
+  { group:'장애인 등록자', family:'disability', label:'장애인 등록자 (경증) — 5%', points:5 },
+  { group:'장애인 등록자', family:'disability', label:'장애인 등록자 (중증) — 10%', points:10 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'농어업인 자녀', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'국민기초생활수급자', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'북한이탈주민', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'다문화가족', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'다자녀부모', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'경력단절여성(경력보유여성)', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'자립준비청년', points:5 },
+  { group:'농어업인 자녀 등 (5%, 택1)', family:'social5', label:'한부모가정', points:5 },
+  { group:'의사상자', family:'uisang', label:'의사상자 본인·배우자·자녀 — 5%', points:5 },
+  { group:'의사상자', family:'uisang', label:'의사상자 (그 외 해당) — 3%', points:3 },
+];
+
+const KRA_COMMON = [
+  { group:'외국어 말하기', family:'eng_speak', label:'영어 말하기 (토익스피킹 IH · OPIc IH 이상)', points:5 },
+  { group:'외국어 말하기', family:'jpn_speak', label:'일본어 말하기 (SJPT 레벨9 이상 · OPIc IH 이상)', points:5 },
+  { group:'외국어 말하기', family:'chn_speak', label:'중국어 말하기 (TSC레벨9 · 新HSK회화 고급70점 · OPIc IH 이상)', points:5 },
+  { group:'IT/문서 자격증', family:'itproc', label:'정보처리기사 (사무직 한정)', points:5 },
+  { group:'한국사능력검정시험', family:'hanguksa2', label:'1급', points:5 },
+  { group:'한국사능력검정시험', family:'hanguksa2', label:'2급', points:2.5 },
+  { group:'컴퓨터 활용능력', family:'computer2', label:'1급', points:5 },
+  { group:'컴퓨터 활용능력', family:'computer2', label:'2급', points:2.5 },
+];
+
+const KRA_CAREER = [
+  { group:'한국마사회 체험형 청년인턴 (택1)', family:'intern', label:'1개월(30일) 이상 ~ 3개월(90일) 미만 수료', points:2.5 },
+  { group:'한국마사회 체험형 청년인턴 (택1)', family:'intern', label:'3개월(90일) 이상 수료', points:5 },
+  { group:'한국마사회 체험형 청년인턴 (택1)', family:'intern', label:'근무 우수 수료자 (2021.1.1. 이후)', points:10 },
+  { group:'시간선택제', family:'parttime', label:"한국마사회 일반직 시간선택제 근무경력자 ('14~'17년, 경마지원직 제외)", points:5 },
+];
+
+const KRA_JOB_COMMON = [
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'sajosa', label:'사회조사분석사 1급', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'sajosa', label:'사회조사분석사 2급', points:2.5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'dataexpert', label:'데이터분석전문가(ADP)', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'dataexpert', label:'데이터분석준전문가(ADsP)', points:2.5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'archexpert', label:'데이터아키텍처전문가(DAP)', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'archexpert', label:'데이터아키텍처준전문가(DAsP)', points:2.5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'bigdata', label:'빅데이터분석기사', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'kbskor', label:'KBS한국어능력시험 1급', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'kbskor', label:'KBS한국어능력시험 2+급·2-급', points:2.5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'writecert', label:'한국실용글쓰기검정 1급', points:5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'writecert', label:'한국실용글쓰기검정 2급', points:2.5 },
+  { group:'사무직 공통 (자격증마다 각각 합산)', family:'aice', label:'AICE Associate·Professional', points:2.5 },
+];
+
+const KRA_JOB_BY_TRACK = {
+  ga: [ { group:'일반행정 — 7.5%', family:'ga_licence', label:'경영지도사', points:7.5 } ],
+  safety: [
+    { group:'산업안전보건관리 (각각 합산)', family:'safety_elec', label:'소방설비기사(전기)', points:7.5 },
+    { group:'산업안전보건관리 (각각 합산)', family:'safety_mech', label:'소방설비기사(기계)', points:7.5 },
+  ],
+  jg: [
+    { group:'재경 (각각 합산)', family:'jg_ga', label:'경영지도사', points:7.5 },
+    { group:'재경 (각각 합산)', family:'jg_aicpa', label:'AICPA', points:7.5 },
+    { group:'재경 (각각 합산)', family:'jg_jaegyeong', label:'재경관리사', points:5 },
+    { group:'재경 (각각 합산)', family:'jg_hoegyegwalli', label:'회계관리 1급', points:5 },
+    { group:'재경 (각각 합산)', family:'jg_hoegyegwalli', label:'회계관리 2급', points:2.5 },
+    { group:'재경 (각각 합산)', family:'jg_gieop', label:'기업회계 1급', points:5 },
+    { group:'재경 (각각 합산)', family:'jg_gieop', label:'기업회계 2급', points:2.5 },
+    { group:'재경 (각각 합산)', family:'jg_semu', label:'세무회계 1급', points:5 },
+    { group:'재경 (각각 합산)', family:'jg_semu', label:'세무회계 2급', points:2.5 },
+    { group:'재경 (각각 합산)', family:'jg_ifrs', label:'IFRS관리사', points:5 },
+  ],
+  lm: [ { group:'법무 — 7.5%', family:'lm_licence', label:'공인중개사', points:7.5 } ],
+};
+
+// =================================================================
+// 아코디언 렌더링 헬퍼
+// =================================================================
+function buildCertBody(data, idPrefix, ptKey, ptSuffix){
+  const groups = {};
+  data.forEach((item, idx) => {
+    item.idx = idx;
+    if(!groups[item.group]) groups[item.group] = [];
+    groups[item.group].push(item);
+  });
+  let html = '';
+  Object.keys(groups).forEach(groupName => {
+    html += `<div class="cert-group"><div class="cert-group-title"><span>${groupName}</span></div><div class="cert-list">`;
+    groups[groupName].forEach(item => {
+      html += `<label class="cert-item" data-idx="${idPrefix}-${item.idx}">
+        <input type="checkbox" data-idx="${idPrefix}-${item.idx}" data-family="${item.family||('single'+idPrefix+item.idx)}" data-points="${item[ptKey]}">
+        <span class="name">${item.label}</span>
+        <span class="pt">${item[ptKey]}${ptSuffix}</span>
+      </label>`;
+    });
+    html += `</div></div>`;
+  });
+  return html;
+}
+
+// ---- KDHC accordion ----
+const kdhcRoot = $('kdhcCertAccordionRoot');
+kdhcRoot.innerHTML = `
+  <details class="cert-category" id="kdhcCommonCategory">
+    <summary>
+      <div class="s-left">
+        <span class="s-title">공통자격증</span>
+        <span class="s-cap">한국사 · 한국어 · OA — 최대 3개, 최대 10점 인정</span>
+      </div>
+      <div class="s-right"><span class="s-score" id="kdhcCommonSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kdhcCommonCertRoot"></div>
+  </details>
+  <details class="cert-category" id="kdhcJobCategory">
+    <summary>
+      <div class="s-left">
+        <span class="s-title">사무직군 직무자격증</span>
+        <span class="s-cap">고급~초급 — 최대 2개, 최대 30점 인정</span>
+      </div>
+      <div class="s-right"><span class="s-score" id="kdhcJobSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kdhcJobCertRoot"></div>
+  </details>
+`;
+$('kdhcCommonCertRoot').innerHTML = buildCertBody(KDHC_COMMON_CERTS, 'kc', 'points', '점')
+  + '<div class="cert-hint">같은 항목(한국사·한국어·OA) 안에서는 가장 높은 등급만 자동으로 인정됩니다.</div>';
+$('kdhcJobCertRoot').innerHTML = buildCertBody(KDHC_JOB_CERTS, 'kj', 'points', '점')
+  + '<div class="cert-hint">동일 계열 자격증은 상위 등급만 인정되며, 서로 다른 계열 최대 2개까지 합산(최대 30점)됩니다.</div>';
+
+// ---- ICN accordion ----
+const icnRoot = $('icnCertAccordionRoot');
+icnRoot.innerHTML = `
+  <details class="cert-category" id="icnCertCategory">
+    <summary>
+      <div class="s-left">
+        <span class="s-title">공통 · 사무직군 우대자격증</span>
+        <span class="s-cap">붙임1 — 공통·사무 각각 최고 1개씩 인정(합산)</span>
+      </div>
+      <div class="s-right"><span class="s-score" id="icnCertSummary">0%</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="icnCertRoot"></div>
+  </details>
+`;
+$('icnCertRoot').innerHTML = buildCertBody(ICN_CERTS, 'ic', 'pct', '%')
+  + '<div class="cert-hint">공통(한국사) 항목에서 최고 1개, 사무 항목(3%/5%/10%)에서 최고 1개, 이렇게 각각 하나씩 인정되어 두 값이 합산됩니다.</div>';
+
+// ---- KEPCO accordion ----
+const kepcoRoot = $('kepcoCertAccordionRoot');
+kepcoRoot.innerHTML = `
+  <details class="cert-category" id="kepcoCertCategory">
+    <summary>
+      <div class="s-left">
+        <span class="s-title">공통 자격증 가점</span>
+        <span class="s-cap">한국사·국어능력·IT분야·외국어구사능력 — 항목당 5점, 최대 20점</span>
+      </div>
+      <div class="s-right"><span class="s-score" id="kepcoCertSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kepcoCertRoot"></div>
+  </details>
+`;
+$('kepcoCertRoot').innerHTML = buildCertBody(KEPCO_CERTS, 'kp', 'points', '점')
+  + '<div class="cert-hint">같은 항목(예: IT분야) 안에서는 여러 개를 체크해도 5점만 인정됩니다. 4개 항목을 모두 충족하면 최대 20점입니다.</div>';
+
+// ---- KRA accordion ----
+const kraRoot = $('kraCertAccordionRoot');
+kraRoot.innerHTML = `
+  <details class="cert-category" id="kraSocialCategory">
+    <summary>
+      <div class="s-left"><span class="s-title">➊ 사회형평 우대사항</span><span class="s-cap">보훈·장애인·농어업인 등·의사상자</span></div>
+      <div class="s-right"><span class="s-score" id="kraSocialSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kraSocialRoot"></div>
+  </details>
+  <details class="cert-category" id="kraCommonCategory">
+    <summary>
+      <div class="s-left"><span class="s-title">➋ 공통역량 우대사항</span><span class="s-cap">외국어 말하기·정보처리기사·한국사·컴활</span></div>
+      <div class="s-right"><span class="s-score" id="kraCommonSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kraCommonRoot"></div>
+  </details>
+  <details class="cert-category" id="kraCareerCategory">
+    <summary>
+      <div class="s-left"><span class="s-title">➌ 기타경력 우대사항</span><span class="s-cap">체험형 청년인턴·시간선택제</span></div>
+      <div class="s-right"><span class="s-score" id="kraCareerSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kraCareerRoot"></div>
+  </details>
+  <details class="cert-category" id="kraJobCategory">
+    <summary>
+      <div class="s-left"><span class="s-title">➍ 직무역량 우대사항</span><span class="s-cap">사무직 공통 + 선택한 세부직무</span></div>
+      <div class="s-right"><span class="s-score" id="kraJobSummary">0.0점</span><span class="chev">▶</span></div>
+    </summary>
+    <div class="cert-body" id="kraJobRoot"></div>
+  </details>
+`;
+$('kraSocialRoot').innerHTML = buildCertBody(KRA_SOCIAL, 'ks', 'points', '점')
+  + '<div class="cert-hint">같은 항목(예: 농어업인 자녀 등) 안에서는 하나만 인정되지만, 서로 다른 항목끼리는 중복 합산됩니다.</div>';
+$('kraCommonRoot').innerHTML = buildCertBody(KRA_COMMON, 'kc2', 'points', '점')
+  + '<div class="cert-hint">한국사·컴활은 상위 등급만 인정되고, 외국어·정보처리기사 등 서로 다른 항목은 모두 중복 합산됩니다.</div>';
+$('kraCareerRoot').innerHTML = buildCertBody(KRA_CAREER, 'kr', 'points', '점')
+  + '<div class="cert-hint">체험형 청년인턴은 최상위 등급 하나만 인정되며, 시간선택제와는 중복 합산됩니다.</div>';
+
+function renderKraJobBody(){
+  const track = $('kraJob').value;
+  const data = [...KRA_JOB_COMMON, ...KRA_JOB_BY_TRACK[track]];
+  $('kraJobRoot').innerHTML = buildCertBody(data, 'kj2', 'points', '점')
+    + '<div class="cert-hint">동일한 자격증은 상위 등급만 인정되며, 사무직 공통 항목과 세부직무 항목은 중복 합산됩니다.</div>';
+  document.querySelectorAll('#kraJobRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+}
+renderKraJobBody();
+$('kraJob').addEventListener('change', ()=>{ renderKraJobBody(); recalcAll(); });
+
+document.querySelectorAll('#kdhcCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#icnCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#kepcoCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#kraSocialRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#kraCommonRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#kraCareerRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+$('kraExempt').addEventListener('change', recalcAll);
+
+document.querySelectorAll('#kdhcCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#icnCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+document.querySelectorAll('#kepcoCertAccordionRoot input[type=checkbox]').forEach(cb => cb.addEventListener('change', recalcAll));
+
+// =================================================================
+// 공통 계산 헬퍼
+// =================================================================
+function scoreByFamily(rootId, capCount, capTotal){
+  const boxes = Array.from(document.getElementById(rootId).querySelectorAll('input[type=checkbox]:checked'));
+  const byFamily = {};
+  boxes.forEach(b => {
+    const fam = b.dataset.family;
+    const pts = parseFloat(b.dataset.points);
+    if(!byFamily[fam] || pts > byFamily[fam]) byFamily[fam] = pts;
+  });
+  let values = Object.values(byFamily).sort((a,b)=>b-a);
+  if(capCount) values = values.slice(0, capCount);
+  let total = values.reduce((s,v)=>s+v,0);
+  if(capTotal) total = Math.min(capTotal, total);
+  return { total, byFamily };
+}
+
+function markCounted(rootId, byFamily, capCount){
+  const container = document.getElementById(rootId);
+  container.querySelectorAll('.cert-item').forEach(el => el.classList.remove('counted'));
+  let entries = Object.entries(byFamily).sort((a,b)=>b[1]-a[1]);
+  if(capCount) entries = entries.slice(0, capCount);
+  const countedFamilies = new Set(entries.map(e=>e[0]));
+  const countedMax = {};
+  entries.forEach(([fam, pts]) => countedMax[fam] = pts);
+  container.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+    const fam = cb.dataset.family;
+    const pts = parseFloat(cb.dataset.points);
+    if(countedFamilies.has(fam) && pts === countedMax[fam]){
+      const label = container.querySelector(`.cert-item[data-idx="${cb.dataset.idx}"]`);
+      if(label) label.classList.add('counted');
+    }
+  });
+}
+
+function wireToggle(id, cb){
+  const group = $(id);
+  group.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      group.querySelectorAll('button').forEach(b=>b.classList.remove('active','ok-active'));
+      btn.classList.add('active');
+      if(btn.dataset.val==='pass') btn.classList.add('ok-active');
+      cb();
+    });
+  });
+}
+function getToggleVal(id){ return $(id).querySelector('button.active').dataset.val; }
+function num(id){ const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+function setStatus(el, ok, textOk, textWarn){
+  el.className = 'status-line ' + (ok ? 'ok' : 'warn');
+  el.innerHTML = '<span class="dot '+(ok?'ok':'warn')+'"></span>' + (ok ? textOk : textWarn);
+}
+
+wireToggle('kdhcCover', recalcAll);
+wireToggle('icnEligible', recalcAll);
+wireToggle('kepcoEligible', recalcAll);
+wireToggle('kraEligible', recalcAll);
+
+$('kdhcToeic').addEventListener('input', recalcAll);
+$('kdhcPreference').addEventListener('change', ()=>{
+  const v = $('kdhcPreference').value;
+  $('kdhcBohunNote').style.display = (v==='10'||v==='5') ? 'block' : 'none';
+  recalcAll();
+});
+$('icnToeic').addEventListener('input', recalcAll);
+$('icnSpeaking').addEventListener('change', recalcAll);
+$('icnBohun').addEventListener('change', recalcAll);
+$('kepcoToeic').addEventListener('input', recalcAll);
+$('kepcoPreference').addEventListener('change', recalcAll);
+
+// =================================================================
+// 계산 로직
+// =================================================================
+function calcKdhc(){
+  const common = scoreByFamily('kdhcCommonCertRoot', null, 10);
+  markCounted('kdhcCommonCertRoot', common.byFamily, null);
+  $('kdhcCommonSummary').textContent = common.total.toFixed(1) + '점';
+  $('kdhcCommonSummary').classList.toggle('has-score', common.total > 0);
+
+  const job = scoreByFamily('kdhcJobCertRoot', 2, 30);
+  markCounted('kdhcJobCertRoot', job.byFamily, 2);
+  $('kdhcJobSummary').textContent = job.total.toFixed(1) + '점';
+  $('kdhcJobSummary').classList.toggle('has-score', job.total > 0);
+
+  const toeicRaw = Math.min(990, Math.max(0, num('kdhcToeic')));
+  const langScore = Math.min(10, Math.round((toeicRaw/990*10)*10)/10);
+
+  const rawScore = Math.min(50, common.total + job.total + langScore);
+  $('kdhcRawScore').textContent = rawScore.toFixed(1);
+
+  const prefVal = $('kdhcPreference').value;
+  const prefRate = prefVal.startsWith('0') ? 0 : parseFloat(prefVal);
+  const prefPoints = 50 * (prefRate/100);
+  $('kdhcPrefPoints').textContent = '+' + prefPoints.toFixed(1);
+  $('kdhcPrefSub').textContent = prefRate>0 ? $('kdhcPreference').selectedOptions[0].textContent : '해당 없음';
+
+  const coverPass = getToggleVal('kdhcCover')==='pass';
+  setStatus($('kdhcCoverStatus'), coverPass, '자기소개서 적격 — 서류가점 순위 반영 대상', '자기소개서 부적격 — 서류전형 자동 불합격');
+
+  const total = rawScore + prefPoints;
+  $('kdhcFinalScore').textContent = total.toFixed(1);
+  $('tabScoreKdhc').textContent = total.toFixed(1) + ' / 50';
+  return { total, max:50 };
+}
+
+function calcIcn(){
+  const cert = scoreByFamily('icnCertRoot', null, null);
+  markCounted('icnCertRoot', cert.byFamily, null);
+  $('icnCertSummary').textContent = cert.total + '%';
+  $('icnCertSummary').classList.toggle('has-score', cert.total > 0);
+  $('icnCertSub').textContent = cert.total>0 ? cert.total+'% 항목 적용' : '해당 없음';
+  const certPoints = cert.total; // pct of 100 == points directly
+  $('icnCertPoints').textContent = '+' + certPoints.toFixed(1);
+
+  const speakingPct = parseFloat($('icnSpeaking').value) || 0;
+  $('icnSpeakingPoints').textContent = '+' + speakingPct.toFixed(1);
+
+  const bohunPct = parseFloat($('icnBohun').value) || 0;
+  $('icnBohunPoints').textContent = '+' + bohunPct.toFixed(1);
+
+  const icnToeicRaw = Math.min(990, Math.max(0, num('icnToeic')));
+  const baseScore = Math.min(100, Math.round((icnToeicRaw/990*100)*10)/10);
+  $('icnBaseScore').value = baseScore.toFixed(1);
+  $('icnBaseDisplay').textContent = baseScore.toFixed(1);
+
+  const eligiblePass = getToggleVal('icnEligible')==='pass';
+  setStatus($('icnEligibleStatus'), eligiblePass, '응시자격 적격 — 서류전형 순위 반영 대상', '응시자격 부적격 — 서류전형 자동 불합격');
+
+  const certValues = Object.values(cert.byFamily);
+  const certPctMax = certValues.length ? Math.max(...certValues) : 0;
+
+  const total = baseScore + certPoints + speakingPct + bohunPct;
+  $('icnFinalScore').textContent = total.toFixed(1);
+  $('tabScoreIcn').textContent = total.toFixed(1) + ' / 100';
+  window.icnLastCalc = { bohunPct, certPct: certPoints, certPctMax, speakingPct, langScore: baseScore };
+  return { total, max:100 };
+}
+
+function calcKepco(){
+  const toeicRaw = Math.min(990, Math.max(0, num('kepcoToeic')));
+  const prefVal = $('kepcoPreference').value;
+  const [prefType] = prefVal.split('|');
+  const isHighCertExempt = prefVal === 'exempt|고급자격증 보유자';
+
+  const langScore = isHighCertExempt ? 100 : Math.min(100, (toeicRaw/850)*100);
+  $('kepcoLangScore').textContent = langScore.toFixed(1);
+
+  const cert = scoreByFamily('kepcoCertRoot', null, 20);
+  markCounted('kepcoCertRoot', cert.byFamily, null);
+  $('kepcoCertSummary').textContent = cert.total.toFixed(1) + '점';
+  $('kepcoCertSummary').classList.toggle('has-score', cert.total > 0);
+  $('kepcoCertSub').textContent = cert.total>0 ? (Object.keys(cert.byFamily).length) + '개 항목 충족' : '해당 없음';
+  $('kepcoCertScore').textContent = cert.total.toFixed(1);
+
+  let prefPoints = 0;
+  let prefLabel = '해당 없음';
+  let isExempt = false;
+  if(prefType === 'exempt'){
+    isExempt = true;
+    prefLabel = $('kepcoPreference').selectedOptions[0].textContent;
+  } else if(prefType === 'pct'){
+    const parts = prefVal.split('|');
+    const pct = parseFloat(parts[1]);
+    prefPoints = 120 * (pct/100);
+    prefLabel = $('kepcoPreference').selectedOptions[0].textContent;
+  }
+  $('kepcoPrefPoints').textContent = '+' + prefPoints.toFixed(1);
+  $('kepcoPrefSub').textContent = prefLabel;
+
+  const eligiblePass = getToggleVal('kepcoEligible')==='pass';
+  if(isExempt){
+    setStatus($('kepcoEligibleStatus'), true, '1차(서류)전형 면제 대상 — 점수와 무관하게 자동 합격', '');
+  } else {
+    setStatus($('kepcoEligibleStatus'), eligiblePass, '지원자격 적격 — 서류전형 순위 반영 대상', '지원자격 미충족 — 지원 불가');
+  }
+
+  const total = langScore + cert.total + prefPoints;
+  $('kepcoFinalScore').textContent = total.toFixed(1);
+  $('tabScoreKepco').textContent = total.toFixed(1) + ' / 120';
+  return { total, max:120 };
+}
+
+function calcKra(){
+  const social = scoreByFamily('kraSocialRoot', null, null);
+  markCounted('kraSocialRoot', social.byFamily, null);
+  $('kraSocialSummary').textContent = social.total.toFixed(1) + '점';
+  $('kraSocialSummary').classList.toggle('has-score', social.total > 0);
+  $('kraSocialScore').textContent = social.total.toFixed(1);
+
+  const common = scoreByFamily('kraCommonRoot', null, null);
+  markCounted('kraCommonRoot', common.byFamily, null);
+  $('kraCommonSummary').textContent = common.total.toFixed(1) + '점';
+  $('kraCommonSummary').classList.toggle('has-score', common.total > 0);
+  $('kraCommonScore').textContent = common.total.toFixed(1);
+
+  const career = scoreByFamily('kraCareerRoot', null, null);
+  markCounted('kraCareerRoot', career.byFamily, null);
+  $('kraCareerSummary').textContent = career.total.toFixed(1) + '점';
+  $('kraCareerSummary').classList.toggle('has-score', career.total > 0);
+  $('kraCareerScore').textContent = career.total.toFixed(1);
+
+  const job = scoreByFamily('kraJobRoot', null, null);
+  markCounted('kraJobRoot', job.byFamily, null);
+  $('kraJobSummary').textContent = job.total.toFixed(1) + '점';
+  $('kraJobSummary').classList.toggle('has-score', job.total > 0);
+  $('kraJobScore').textContent = job.total.toFixed(1);
+
+  const isExempt = $('kraExempt').checked;
+  const eligiblePass = getToggleVal('kraEligible')==='pass';
+  if(isExempt){
+    setStatus($('kraEligibleStatus'), true, '고급자격증 보유 — 서류전형 면제(합격배수 외 추가 합격 처리)', '');
+  } else {
+    setStatus($('kraEligibleStatus'), eligiblePass, '1단계 적격심사 통과(100점) — 가점 합산하여 순위 반영', '1단계 적격심사 미충족 — 자동 불합격');
+  }
+
+  const base = (eligiblePass || isExempt) ? 100 : 0;
+  $('kraBaseScore').textContent = base.toFixed(1);
+  const total = base + social.total + common.total + career.total + job.total;
+  $('kraFinalScore').textContent = total.toFixed(1);
+  $('tabScoreKra').textContent = total.toFixed(1) + '점';
+  return { total, max: Math.max(150, total) };
+}
+
+let activeCompany = 'kdhc';
+
+function recalcAll(){
+  const kdhc = calcKdhc();
+  const icn = calcIcn();
+  const kepco = calcKepco();
+  const kra = calcKra();
+  const map = { kdhc, icn, kepco, kra };
+  const active = map[activeCompany];
+  const labels = { kdhc:'지역난방공사 · 서류전형 총점', icn:'인천국제공항공사 · 서류전형 총점', kepco:'한국전력공사 · 서류전형 총점', kra:'한국마사회 · 서류전형 가점' };
+  $('gaugeLabel').textContent = labels[activeCompany];
+  $('gaugeValue').textContent = active.total.toFixed(1);
+  $('gaugeFill').style.width = Math.max(0, Math.min(100, (active.total/active.max)*100)) + '%';
+}
+
+document.querySelectorAll('.company-tab').forEach(tab => {
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.company-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.company-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    activeCompany = tab.dataset.company;
+    $('panel-' + activeCompany).classList.add('active');
+    $('icnLogControls').style.display = (activeCompany === 'icn') ? 'block' : 'none';
+    recalcAll();
+  });
+});
+
+function resetKdhcFields(){
+  $('kdhcToeic').value = '';
+  document.querySelectorAll('#kdhcCertAccordionRoot input[type=checkbox]').forEach(cb => cb.checked = false);
+  $('kdhcPreference').value = '0';
+  $('kdhcBohunNote').style.display = 'none';
+  const g = $('kdhcCover');
+  g.querySelectorAll('button').forEach(b=>b.classList.remove('active','ok-active'));
+  g.querySelector('button[data-val=pass]').classList.add('active','ok-active');
+  recalcAll();
+}
+function resetIcnFields(){
+  $('icnToeic').value = '';
+  document.querySelectorAll('#icnCertAccordionRoot input[type=checkbox]').forEach(cb => cb.checked = false);
+  $('icnSpeaking').value = '0';
+  $('icnBohun').value = '0';
+  const g = $('icnEligible');
+  g.querySelectorAll('button').forEach(b=>b.classList.remove('active','ok-active'));
+  g.querySelector('button[data-val=pass]').classList.add('active','ok-active');
+  recalcAll();
+}
+function resetKepcoFields(){
+  $('kepcoToeic').value = '';
+  document.querySelectorAll('#kepcoCertAccordionRoot input[type=checkbox]').forEach(cb => cb.checked = false);
+  $('kepcoPreference').value = 'none|0';
+  const g = $('kepcoEligible');
+  g.querySelectorAll('button').forEach(b=>b.classList.remove('active','ok-active'));
+  g.querySelector('button[data-val=pass]').classList.add('active','ok-active');
+  recalcAll();
+}
+function resetKraFields(){
+  document.querySelectorAll('#kraCertAccordionRoot input[type=checkbox]').forEach(cb => cb.checked = false);
+  $('kraExempt').checked = false;
+  $('kraJob').value = 'ga';
+  renderKraJobBody();
+  const g = $('kraEligible');
+  g.querySelectorAll('button').forEach(b=>b.classList.remove('active','ok-active'));
+  g.querySelector('button[data-val=pass]').classList.add('active','ok-active');
+  recalcAll();
+}
+
+$('kdhcResetBtn').addEventListener('click', resetKdhcFields);
+$('icnResetBtn').addEventListener('click', resetIcnFields);
+$('kepcoResetBtn').addEventListener('click', resetKepcoFields);
+$('kraResetBtn').addEventListener('click', resetKraFields);
+
+recalcAll();
+
+// =================================================================
+// 스펙 기록 (합격/불합격 누적) — 회사별로 개별 저장
+// =================================================================
+const companyNames = { kdhc:'지역난방공사', icn:'인천국제공항공사', kepco:'한국전력공사', kra:'한국마사회' };
+const companyCodeByName = { '지역난방공사':'kdhc', '인천국제공항공사':'icn', '한국전력공사':'kepco', '한국마사회':'kra' };
+const LOG_STORAGE_KEYS = {
+  kdhc: 'gongfigup_spec_log_kdhc',
+  icn: 'gongfigup_spec_log_icn',
+  kepco: 'gongfigup_spec_log_kepco',
+  kra: 'gongfigup_spec_log_kra'
+};
+const LOG_STORAGE_KEY_LEGACY = 'gongfigup_spec_log_entries'; // 예전 통합 저장 키(마이그레이션용)
+let logEntries = [];
+
+function codeForEntry(entry){
+  return entry.companyCode || companyCodeByName[entry.company] || null;
+}
+
+async function saveLogEntries(){
+  try{
+    if(!(window.storage && typeof window.storage.set === 'function')) return;
+    const byCode = { kdhc:[], icn:[], kepco:[], kra:[] };
+    logEntries.forEach(e => {
+      const code = codeForEntry(e);
+      if(code && byCode[code]) byCode[code].push(e);
+    });
+    await Promise.all(Object.keys(LOG_STORAGE_KEYS).map(code =>
+      window.storage.set(LOG_STORAGE_KEYS[code], JSON.stringify(byCode[code]), false)
+    ));
+  }catch(err){
+    console.error('스펙 기록 저장 실패:', err);
+  }
+}
+
+async function loadLogEntries(){
+  try{
+    if(window.storage && typeof window.storage.get === 'function'){
+      let merged = [];
+      let anyPerCompany = false;
+      for(const code of Object.keys(LOG_STORAGE_KEYS)){
+        try{
+          const result = await window.storage.get(LOG_STORAGE_KEYS[code], false);
+          if(result && result.value){
+            const parsed = JSON.parse(result.value);
+            if(Array.isArray(parsed) && parsed.length){
+              anyPerCompany = true;
+              parsed.forEach(e => { e.companyCode = code; });
+              merged = merged.concat(parsed);
+            }
+          }
+        }catch(e){ /* 해당 회사 저장 기록 없음 */ }
+      }
+      if(anyPerCompany){
+        logEntries = merged;
+      } else {
+        // 회사별 저장 기록이 아직 없으면, 예전 통합 키에서 한 번만 불러와 마이그레이션
+        try{
+          const legacy = await window.storage.get(LOG_STORAGE_KEY_LEGACY, false);
+          if(legacy && legacy.value){
+            const parsed = JSON.parse(legacy.value);
+            if(Array.isArray(parsed) && parsed.length){
+              parsed.forEach(e => { e.companyCode = codeForEntry(e); });
+              logEntries = parsed;
+              saveLogEntries(); // 회사별 키로 즉시 재저장
+            }
+          }
+        }catch(e){ /* 예전 기록도 없음 */ }
+      }
+    }
+  }catch(err){
+    // 저장된 기록이 없거나 최초 실행인 경우
+  }
+  renderLogTable();
+}
+
+function renderLogTable(){
+  const body = $('logTableBody');
+  if(logEntries.length === 0){
+    body.innerHTML = '<tr id="logEmptyRow"><td colspan="7" style="padding:16px 6px;color:var(--text-faint);text-align:center;">아직 기록된 스펙이 없습니다.</td></tr>';
+    return;
+  }
+
+  const icnCapMode = window.icnRankMode === 'cap100';
+  const icnCertMax = window.icnCertTiebreakMode === 'max';
+  function icnEffScore(entry){
+    return icnCapMode ? Math.min(100, entry.score) : entry.score;
+  }
+
+  // 기관별로 묶고, 기관 내에서 정렬 (인천국제공항공사는 공식 동점자 처리기준 적용)
+  const groups = {};
+  logEntries.forEach(e => {
+    if(!groups[e.company]) groups[e.company] = [];
+    groups[e.company].push(e);
+  });
+
+  function compareIcn(a, b){
+    const effA = icnEffScore(a), effB = icnEffScore(b);
+    if(effB !== effA) return effB - effA;
+    const ta = a.tiebreak || {}, tb = b.tiebreak || {};
+    const bohunA = ta.bohunPct || 0, bohunB = tb.bohunPct || 0;
+    if(bohunB !== bohunA) return bohunB - bohunA;              // ➊ 취업지원(보훈)대상자 우선
+    const certA = icnCertMax
+      ? (ta.certPctMax !== undefined ? ta.certPctMax : (ta.certPct||0))
+      : (ta.certPct || 0);
+    const certB = icnCertMax
+      ? (tb.certPctMax !== undefined ? tb.certPctMax : (tb.certPct||0))
+      : (tb.certPct || 0);
+    if(certB !== certA) return certB - certA;                  // ➋ 우대자격증 가점순
+    const spA = ta.speakingPct || 0, spB = tb.speakingPct || 0;
+    if(spB !== spA) return spB - spA;                          // ➌ 어학스피킹 가점순
+    const laA = ta.langScore || 0, laB = tb.langScore || 0;
+    return laB - laA;                                          // ➍ 공인어학성적 고득점순
+  }
+  function compareDefault(a, b){ return b.score - a.score; }
+
+  const companyOrder = [];
+  logEntries.forEach(e => { if(!companyOrder.includes(e.company)) companyOrder.push(e.company); });
+
+  let rowsHtml = '';
+  companyOrder.forEach(companyName => {
+    const list = groups[companyName].slice();
+    const isIcn = companyName === companyNames.icn;
+    list.sort(isIcn ? compareIcn : compareDefault);
+
+    // 순위 매기기: 비교 기준이 완전히 동일하면 같은 등위, 다르면 다음 등위로
+    let rank = 0;
+    let prevKey = null;
+    list.forEach((entry, idx) => {
+      const tb = entry.tiebreak || {};
+      const certVal = icnCertMax
+        ? (tb.certPctMax !== undefined ? tb.certPctMax : (tb.certPct||0))
+        : (tb.certPct || 0);
+      const key = isIcn
+        ? [icnEffScore(entry), tb.bohunPct||0, certVal, tb.speakingPct||0, tb.langScore||0].join('|')
+        : String(entry.score);
+      if(key !== prevKey){ rank = idx + 1; prevKey = key; }
+      entry._rank = rank;
+    });
+
+    const groupLabel = (isIcn && icnCapMode) ? companyName + ' (100점 캡 + 동점자 처리 적용)' : companyName;
+    rowsHtml += `<tr><td colspan="7" style="padding:10px 6px 4px;font-weight:650;color:var(--text-dim);border-bottom:1px solid var(--line);">${escapeHtml(groupLabel)}</td></tr>`;
+    list.forEach(entry => {
+      const noteText = entry.note || '';
+      let cls = '';
+      if(noteText.includes('불합격')) cls = 'log-fail';
+      else if(noteText.includes('합격')) cls = 'log-pass';
+      const capped = isIcn && icnCapMode && entry.score > 100;
+      const scoreLabel = capped ? '100.0*' : entry.score.toFixed(1);
+      rowsHtml += `<tr class="${cls}" data-id="${entry.id}">
+        <td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:650;">${entry._rank}</td>
+        <td>${entry.year || '-'}</td>
+        <td>${escapeHtml(entry.company) || '-'}</td>
+        <td>${escapeHtml(entry.spec) || '-'}</td>
+        <td>${escapeHtml(entry.note) || '-'}</td>
+        <td class="log-score" title="${capped ? '원점수 ' + entry.score.toFixed(1) + '점 → 100점으로 캡' : ''}">${scoreLabel}</td>
+        <td><button class="log-del-btn" data-id="${entry.id}" title="삭제">✕</button></td>
+      </tr>`;
+    });
+  });
+
+  body.innerHTML = rowsHtml;
+
+  body.querySelectorAll('.log-del-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      logEntries = logEntries.filter(e => String(e.id) !== String(id));
+      renderLogTable();
+      saveLogEntries();
+    });
+  });
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function countedWithPoints(rootId){
+  return Array.from(document.querySelectorAll('#'+rootId+' .cert-item.counted')).map(el => {
+    const name = el.querySelector('.name').textContent.trim();
+    const pt = el.querySelector('.pt').textContent.trim();
+    return `${name}(가산${pt})`;
+  });
+}
+
+function buildKdhcSpec(){
+  const parts = [...countedWithPoints('kdhcCommonCertRoot'), ...countedWithPoints('kdhcJobCertRoot')];
+  const toeic = num('kdhcToeic');
+  if(toeic > 0){
+    const langScore = Math.min(10, Math.round((Math.min(990,toeic)/990*10)*10)/10);
+    parts.push(`TOEIC ${toeic}(가산${langScore.toFixed(1)}점)`);
+  }
+  const prefVal = $('kdhcPreference').value;
+  if(prefVal !== '0'){
+    const label = $('kdhcPreference').selectedOptions[0].textContent.split('—')[0].trim();
+    const prefPct = parseFloat(prefVal);
+    parts.push(`${label}(가산${prefPct}%)`);
+  }
+  return parts.join(', ') || '입력된 자격 없음';
+}
+
+function buildIcnSpec(){
+  const parts = [...countedWithPoints('icnCertRoot')];
+  const toeic = num('icnToeic');
+  if(toeic > 0){
+    const langScore = Math.min(100, Math.round((Math.min(990,toeic)/990*100)*10)/10);
+    parts.push(`TOEIC ${toeic}(가산${langScore.toFixed(1)}점)`);
+  }
+  const speakingVal = $('icnSpeaking').value;
+  if(speakingVal !== '0'){
+    parts.push(`스피킹(가산${speakingVal}%)`);
+  }
+  const bohunVal = $('icnBohun').value;
+  if(bohunVal !== '0'){
+    parts.push(`보훈(가산${bohunVal}%)`);
+  }
+  return parts.join(', ') || '입력된 스펙 없음';
+}
+
+function buildKepcoSpec(){
+  const parts = [...countedWithPoints('kepcoCertRoot')];
+  const toeic = num('kepcoToeic');
+  if(toeic > 0) parts.push(`TOEIC ${toeic}`);
+  const prefVal = $('kepcoPreference').value;
+  if(prefVal !== 'none|0'){
+    const label = $('kepcoPreference').selectedOptions[0].textContent.split('—')[0].trim();
+    const prefParts = prefVal.split('|');
+    if(prefParts[0] === 'exempt') parts.push(`${label}(면제)`);
+    else if(prefParts[0] === 'pct') parts.push(`${label}(가산${prefParts[1]}%)`);
+    else parts.push(label);
+  }
+  return parts.join(', ') || '입력된 스펙 없음';
+}
+
+function buildKraSpec(){
+  const roots = ['kraSocialRoot','kraCommonRoot','kraCareerRoot','kraJobRoot'];
+  const parts = [];
+  roots.forEach(rootId => { parts.push(...countedWithPoints(rootId)); });
+  if($('kraExempt').checked) parts.push('서류전형 면제 자격증 보유');
+  return parts.join(', ') || '입력된 스펙 없음';
+}
+
+function addRecordFor(company){
+  const scoreElMap = { kdhc:'kdhcFinalScore', icn:'icnFinalScore', kepco:'kepcoFinalScore', kra:'kraFinalScore' };
+  const score = parseFloat($(scoreElMap[company]).textContent) || 0;
+  const year = $('logYear').value || new Date().getFullYear();
+  const specFns = { kdhc:buildKdhcSpec, icn:buildIcnSpec, kepco:buildKepcoSpec, kra:buildKraSpec };
+  const spec = specFns[company]();
+  const noteIds = { kdhc:'kdhcNote', icn:'icnNote', kepco:'kepcoNote', kra:'kraNote' };
+  const noteInput = $(noteIds[company]);
+  const note = noteInput.value.trim();
+
+  const entry = {
+    id: Date.now() + Math.random(),
+    year, company: companyNames[company], companyCode: company, spec, note, score
+  };
+  if(company === 'icn' && window.icnLastCalc){
+    entry.tiebreak = { ...window.icnLastCalc };
+  }
+  logEntries.push(entry);
+  noteInput.value = '';
+  renderLogTable();
+  saveLogEntries();
+}
+
+$('logYear').value = new Date().getFullYear();
+
+window.icnRankMode = 'sum';
+$('icnRankMode').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $('icnRankMode').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    window.icnRankMode = btn.dataset.val;
+    renderLogTable();
+  });
+});
+window.icnCertTiebreakMode = 'sum';
+$('icnCertTiebreakMode').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $('icnCertTiebreakMode').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    window.icnCertTiebreakMode = btn.dataset.val;
+    renderLogTable();
+  });
+});
+$('kdhcLogBtn').addEventListener('click', ()=> addRecordFor('kdhc'));
+$('icnLogBtn').addEventListener('click', ()=> addRecordFor('icn'));
+$('kepcoLogBtn').addEventListener('click', ()=> addRecordFor('kepco'));
+$('kraLogBtn').addEventListener('click', ()=> addRecordFor('kra'));
+
+$('logImageBtn').addEventListener('click', async ()=>{
+  const hint = $('logImageHint');
+  if(logEntries.length === 0){
+    hint.textContent = '저장할 기록이 없습니다. 먼저 스펙을 추가해주세요.';
+    hint.style.color = 'var(--warn)';
+    return;
+  }
+  if(typeof html2canvas === 'undefined'){
+    hint.textContent = '이미지 저장 스크립트를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.';
+    hint.style.color = 'var(--warn)';
+    return;
+  }
+  hint.textContent = '이미지 생성 중...';
+  hint.style.color = 'var(--text-faint)';
+  try{
+    const target = $('logCaptureArea');
+    const canvas = await html2canvas(target, { backgroundColor:'#ffffff', scale:2 });
+    const link = document.createElement('a');
+    link.download = '스펙기록_' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    hint.textContent = '이미지로 저장했습니다.';
+    hint.style.color = 'var(--ok)';
+  }catch(err){
+    hint.textContent = '이미지 저장에 실패했습니다: ' + err.message;
+    hint.style.color = 'var(--warn)';
+  }
+});
+
+renderLogTable();
+loadLogEntries();
+</script>
+</body>
+</html>
