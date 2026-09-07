@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>졸업생 반영 수능 등급 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#faf9f4;
+    --paper-line:#dfdac9;
+    --ink:#1c1c26;
+    --ink-soft:#5b5b68;
+    --pencil:#2f5fa3;
+    --pencil-soft:#e7edf6;
+    --red:#c73a2e;
+    --red-soft:#fbe7e3;
+    --green:#3f7d58;
+    --green-soft:#e6f0e9;
+    --gold:#b9862c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, var(--paper-line) 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:"Noto Sans KR", system-ui, sans-serif;
+    line-height:1.6;
+    padding:48px 20px 90px;
+  }
+  .sheet{
+    max-width:760px;
+    margin:0 auto;
+    background:#fffdf8;
+    border:1px solid #e3ddc9;
+    box-shadow:0 1px 0 #fff inset, 0 18px 40px -24px rgba(28,28,38,0.35);
+    position:relative;
+  }
+  .sheet::before{
+    content:"";
+    position:absolute;
+    left:56px; top:0; bottom:0;
+    width:1px;
+    background:var(--red);
+    opacity:0.28;
+  }
+  .punch{
+    position:absolute; left:22px; width:11px; height:11px; border-radius:50%;
+    background:var(--paper);
+    box-shadow:inset 0 0 0 1px #d8d2bc, inset 0 2px 3px rgba(0,0,0,0.15);
+  }
+  .punch.p1{top:34px;} .punch.p2{top:50%; transform:translateY(-50%);} .punch.p3{bottom:34px;}
+
+  .inner{ padding:44px 40px 40px 76px; }
+  @media (max-width:600px){ .inner{padding:34px 22px 30px 54px;} .sheet::before{left:36px;} .punch{left:16px; width:8px; height:8px;} }
+
+  .eyebrow{
+    font-family:"Roboto Mono", monospace;
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--red); font-weight:700; margin:0 0 10px;
+  }
+  h1{
+    font-family:"Noto Serif KR", serif;
+    font-weight:900; font-size:30px; line-height:1.28; margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{ color:var(--ink-soft); font-size:14.5px; margin:0 0 26px; }
+
+  .brief{
+    background:var(--pencil-soft);
+    border-left:3px solid var(--pencil);
+    padding:14px 18px; font-size:13.6px; color:#33415c;
+    margin-bottom:32px;
+  }
+  .brief b{color:var(--pencil);}
+
+  .section-label{
+    display:flex; align-items:center; gap:10px;
+    font-family:"Roboto Mono", monospace; font-size:12px; letter-spacing:.08em;
+    color:var(--ink-soft); text-transform:uppercase; margin:30px 0 12px;
+  }
+  .section-label::after{ content:""; flex:1; height:1px; background:#e3ddc9; }
+  .section-label span.num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%; border:1.4px solid var(--red);
+    color:var(--red); font-size:10.5px; font-weight:700;
+  }
+
+  /* 과목 선택 - OMR 마킹 스타일 */
+  .subject-row{ display:flex; gap:12px; }
+  .subject-btn{
+    flex:1; padding:14px 10px; border:1.6px solid #d8d2bc; background:#fff;
+    font-family:"Noto Sans KR", sans-serif; font-weight:700; font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; color:var(--ink-soft); transition:all .12s ease;
+  }
+  .subject-btn .bubble{
+    width:16px; height:16px; border-radius:50%; border:1.6px solid #b9b2a0; flex:none;
+  }
+  .subject-btn.active{ border-color:var(--pencil); color:var(--pencil); background:var(--pencil-soft); }
+  .subject-btn.active .bubble{ background:var(--pencil); border-color:var(--pencil); }
+
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; font-weight:500;
+  }
+  .field .hint{ font-size:11.5px; color:#9a9484; margin-top:5px; }
+  .input-wrap{ position:relative; }
+  input[type=number]{
+    width:100%; border:none; border-bottom:1.6px solid #cfc8b2;
+    background:transparent; padding:9px 46px 9px 2px;
+    font-family:"Roboto Mono", monospace; font-size:19px; font-weight:700; color:var(--ink);
+    outline:none;
+  }
+  input[type=number]:focus{ border-bottom-color:var(--pencil); }
+  .suffix{
+    position:absolute; right:2px; top:50%; transform:translateY(-50%);
+    font-family:"Roboto Mono", monospace; color:var(--ink-soft); font-size:14px;
+  }
+  .big-field input[type=number]{ font-size:30px; padding:10px 60px 10px 2px; }
+  .big-field .suffix{ font-size:20px; }
+
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px 18px; }
+  @media (max-width:560px){ .grid3{ grid-template-columns:1fr; } }
+
+  .stamp-btn{
+    margin-top:8px; width:100%; padding:16px; border:2px solid var(--red);
+    background:#fff; color:var(--red); font-weight:900; font-size:16px;
+    letter-spacing:.04em; cursor:pointer; font-family:"Noto Sans KR", sans-serif;
+    transform:rotate(-0.4deg);
+    transition:transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .stamp-btn:hover{ background:var(--red); color:#fff; transform:rotate(-0.4deg) scale(1.01); }
+  .stamp-btn:active{ transform:rotate(-0.4deg) scale(0.98); }
+
+  /* 결과 */
+  #results{ display:none; margin-top:36px; }
+  .result-row{
+    display:flex; align-items:stretch; gap:0; border:1.4px solid #e3ddc9; background:#fff;
+  }
+  @media (max-width:560px){ .result-row{ flex-direction:column; } }
+  .result-col{ flex:1; padding:24px 18px; text-align:center; position:relative; }
+  .result-col + .result-col{ border-left:1.4px dashed #d8d2bc; }
+  @media (max-width:560px){ .result-col + .result-col{ border-left:none; border-top:1.4px dashed #d8d2bc; } }
+  .result-tag{ font-family:"Roboto Mono", monospace; font-size:11px; letter-spacing:.08em; color:var(--ink-soft); text-transform:uppercase; margin-bottom:14px; }
+  .grade-circle{
+    width:74px; height:74px; border-radius:50%; margin:0 auto 12px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Noto Serif KR", serif; font-weight:900; font-size:30px;
+    border:3px solid var(--pencil); color:var(--pencil);
+  }
+  .result-col.exam .grade-circle{ border-color:var(--red); color:var(--red); }
+  .result-percentile{ font-family:"Roboto Mono", monospace; font-size:13px; color:var(--ink-soft); }
+  .result-percentile b{ color:var(--ink); }
+
+  .delta-banner{
+    text-align:center; padding:14px 10px; font-weight:800; font-size:14.5px;
+    border-top:1.4px solid #e3ddc9;
+  }
+  .delta-banner.down{ background:var(--red-soft); color:var(--red); }
+  .delta-banner.flat{ background:var(--green-soft); color:var(--green); }
+
+  .detail-box{
+    margin-top:18px; font-size:13.4px; color:#3d3d47; background:#fbfaf5;
+    border:1px solid #e9e4d4; padding:16px 18px;
+  }
+  .detail-box div + div{ margin-top:6px; }
+  .detail-box b{ font-family:"Roboto Mono", monospace; }
+
+  details{ margin-top:26px; font-size:13px; color:var(--ink-soft); }
+  summary{ cursor:pointer; font-weight:700; color:var(--pencil); font-size:13px; }
+  .source-table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:12.5px; }
+  .source-table th,.source-table td{ border:1px solid #e3ddc9; padding:6px 8px; text-align:center; }
+  .source-table th{ background:#f4f0e2; font-weight:700; }
+
+  .disclaimer{
+    margin-top:30px; font-size:11.8px; color:#948e7c; line-height:1.7;
+    border-top:1px dashed #d8d2bc; padding-top:16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <span class="punch p1"></span><span class="punch p2"></span><span class="punch p3"></span>
+  <div class="inner">
+
+    <p class="eyebrow">2025학년도 수능 실채점 자료 기반 · 통계적 추정</p>
+    <h1>졸업생 반영<br>수능 예상등급 계산기</h1>
+    <p class="subtitle">모의고사 백분위는 재학생끼리의 경쟁 결과입니다. 실제 수능에는 평균적으로 더 강한 졸업생·검정고시 응시자가 합류합니다.</p>
+
+    <div class="brief">
+      2025학년도 수능 국어 표준점수 평균은 재학생 <b>95.8</b>점, 졸업생 <b>108.9</b>점이었습니다.
+      1등급 안에서도 재학생은 43%뿐, 나머지는 졸업생·검정고시였습니다. 이 계산기는 그 격차를 반영해
+      "재학생 안에서의 백분위"를 "전체 응시자 안에서의 백분위"로 다시 계산합니다.
+    </div>
+
+    <div class="section-label"><span class="num">1</span> 과목</div>
+    <div class="subject-row">
+      <button type="button" class="subject-btn active" data-subject="korean"><span class="bubble"></span>국어</button>
+      <button type="button" class="subject-btn" data-subject="math"><span class="bubble"></span>수학</button>
+      <button type="button" class="subject-btn" data-subject="english"><span class="bubble"></span>영어</button>
+    </div>
+
+    <div class="section-label" id="step2Label"><span class="num">2</span> 나의 모의고사 백분위</div>
+    <div class="field big-field">
+      <div class="input-wrap">
+        <input type="number" id="percentile" min="0.1" max="99.9" step="0.1" value="96">
+        <span class="suffix" id="percentileSuffix">%</span>
+      </div>
+      <div class="hint" id="percentileHint">재학생만 응시하는 3·4·7·10월 학력평가 기준 백분위를 넣으세요. (재수생이 섞이는 6·9월 평가원 모의고사는 이미 일부 반영되어 있어 이 계산기와 함께 쓰면 하락폭이 과장될 수 있습니다)</div>
+    </div>
+
+    <div id="populationSection">
+      <div class="section-label"><span class="num">3</span> 응시 인원 (2025학년도 수능 실채점 인원이 기본값)</div>
+      <div class="grid3">
+        <div class="field">
+          <label>재학생 수</label>
+          <div class="input-wrap"><input type="number" id="numEdu" value="302589" min="0"><span class="suffix">명</span></div>
+        </div>
+        <div class="field">
+          <label>졸업생 수</label>
+          <div class="input-wrap"><input type="number" id="numGrad" value="143496" min="0"><span class="suffix">명</span></div>
+        </div>
+        <div class="field">
+          <label>검정고시 등</label>
+          <div class="input-wrap"><input type="number" id="numGed" value="17401" min="0"><span class="suffix">명</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brief" id="englishNotice" style="display:none;">
+      영어는 2018학년도 수능부터 <b>절대평가</b>입니다. 원점수 90점 이상은 무조건 1등급, 80~89점은 2등급처럼
+      등급컷이 고정돼 있어서, 재학생·졸업생이 아무리 많이 섞여도 등급 자체가 밀려나지 않습니다.
+      그래서 국어·수학과 달리 인원수 계산 없이 <b>원점수만으로</b> 바로 등급을 보여드립니다.
+    </div>
+
+    <button type="button" class="stamp-btn" id="calcBtn">채점하기 — 예상등급 계산</button>
+
+    <div id="results">
+      <div class="result-row" id="compareRow">
+        <div class="result-col mock">
+          <div class="result-tag">모의고사 (재학생 기준)</div>
+          <div class="grade-circle" id="mockGrade">1</div>
+          <div class="result-percentile">백분위 <b id="mockPct">96.0</b></div>
+        </div>
+        <div class="result-col exam">
+          <div class="result-tag">수능 예상 (전체 반영)</div>
+          <div class="grade-circle" id="examGrade">2</div>
+          <div class="result-percentile">백분위 <b id="examPct">89.4</b></div>
+        </div>
+      </div>
+      <div class="result-row" id="singleRow" style="display:none;">
+        <div class="result-col exam" style="flex:1;">
+          <div class="result-tag">영어 예상 등급 (절대평가 · 원점수 기준)</div>
+          <div class="grade-circle" id="englishGrade">1</div>
+          <div class="result-percentile">원점수 <b id="englishScoreLabel">96</b>점</div>
+        </div>
+      </div>
+      <div class="delta-banner" id="deltaBanner">예상 1등급 하락</div>
+
+      <div class="detail-box" id="detailBox"></div>
+    </div>
+
+    <details>
+      <summary>계산 방식 및 기준 자료 보기</summary>
+      <p>재학생·졸업생·검정고시 각 집단의 표준점수가 정규분포를 따른다고 가정합니다. 입력한 백분위를
+      재학생 집단의 분포에 대입해 표준점수를 추정한 뒤, 그 점수를 기준으로 세 집단(입력한 인원수 반영)을
+      다시 합쳐 전체 백분위와 등급을 재계산합니다. 등급 컷은 표준 9등급 누적비율(4/11/23/40/60/77/89/96/100%)을 사용합니다.</p>
+      <table class="source-table">
+        <tr><th>과목</th><th>구분</th><th>평균</th><th>표준편차</th><th>기본 인원</th></tr>
+        <tr><td rowspan="3">국어</td><td>재학생</td><td>95.8</td><td>20.0</td><td>302,589</td></tr>
+        <tr><td>졸업생</td><td>108.9</td><td>16.9</td><td>143,496</td></tr>
+        <tr><td>검정고시</td><td>99.2</td><td>19.0</td><td>17,401</td></tr>
+        <tr><td rowspan="3">수학</td><td>재학생</td><td>96.2</td><td>19.6</td><td>302,589</td></tr>
+        <tr><td>졸업생</td><td>108.4</td><td>18.2</td><td>143,496</td></tr>
+        <tr><td>검정고시</td><td>95.7</td><td>20.4</td><td>17,401</td></tr>
+      </table>
+      <p style="margin-top:16px;">영어는 절대평가라 위 계산과 무관하게 아래 원점수 구간으로 등급이 정해집니다.</p>
+      <table class="source-table">
+        <tr><th>등급</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+        <tr><td>원점수</td><td>100~90</td><td>89~80</td><td>79~70</td><td>69~60</td><td>59~50</td><td>49~40</td><td>39~30</td><td>29~20</td><td>19~0</td></tr>
+      </table>
+    </details>
+
+    <p class="disclaimer">
+      본 계산기는 2025학년도 수능 실채점 공개 자료(평가원)를 바탕으로 한 통계적 추정 도구이며, 미래 응시집단의
+      실력 분포가 동일하다는 가정 위에서 작동합니다. 실제 수능 등급은 그해 시험 난이도, 개인의 학습 진도,
+      컨디션 등 훨씬 많은 변수에 좌우되므로, 이 계산기의 결과는 참고용 추정치일 뿐 확정적인 예측이 아닙니다.
+    </p>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const DATA = {
+    korean: { edu:{mean:95.8, sd:20.0}, grad:{mean:108.9, sd:16.9}, ged:{mean:99.2, sd:19.0} },
+    math:   { edu:{mean:96.2, sd:19.6}, grad:{mean:108.4, sd:18.2}, ged:{mean:95.7, sd:20.4} }
+  };
+  const DEFAULT_N = { edu: 302589, grad: 143496, ged: 17401 };
+  let subject = 'korean';
+
+  const subjectBtns = document.querySelectorAll('.subject-btn');
+  const percentileInput = document.getElementById('percentile');
+  const step2Label = document.getElementById('step2Label');
+  const percentileSuffix = document.getElementById('percentileSuffix');
+  const percentileHint = document.getElementById('percentileHint');
+  const populationSection = document.getElementById('populationSection');
+  const englishNotice = document.getElementById('englishNotice');
+  const resultsBox = document.getElementById('results');
+  const compareRow = document.getElementById('compareRow');
+  const singleRow = document.getElementById('singleRow');
+  const deltaBanner = document.getElementById('deltaBanner');
+
+  function applySubjectUI(){
+    resultsBox.style.display = 'none';
+    if (subject === 'english'){
+      step2Label.innerHTML = '<span class="num">2</span> 나의 예상(모의고사) 원점수';
+      percentileSuffix.textContent = '점';
+      percentileHint.textContent = '절대평가라 인원 구성과 무관하게 원점수 그대로 등급이 결정됩니다. 0~100 사이 원점수를 넣어주세요.';
+      percentileInput.min = 0; percentileInput.max = 100; percentileInput.step = 1;
+      if (percentileInput.value > 100 || percentileInput.value <= 0) percentileInput.value = 90;
+      populationSection.style.display = 'none';
+      englishNotice.style.display = 'block';
+    } else {
+      step2Label.innerHTML = '<span class="num">2</span> 나의 모의고사 백분위';
+      percentileSuffix.textContent = '%';
+      percentileHint.textContent = '재학생만 응시하는 3·4·7·10월 학력평가 기준 백분위를 넣으세요. (재수생이 섞이는 6·9월 평가원 모의고사는 이미 일부 반영되어 있어 이 계산기와 함께 쓰면 하락폭이 과장될 수 있습니다)';
+      percentileInput.min = 0.1; percentileInput.max = 99.9; percentileInput.step = 0.1;
+      if (percentileInput.value > 99.9) percentileInput.value = 96;
+      populationSection.style.display = 'block';
+      englishNotice.style.display = 'none';
+    }
+  }
+
+  subjectBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      subjectBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      subject = btn.dataset.subject;
+      applySubjectUI();
+    });
+  });
+
+  function erf(x){
+    const sign = x >= 0 ? 1 : -1;
+    x = Math.abs(x);
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const t = 1/(1+p*x);
+    const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign*y;
+  }
+  function normalCDF(x, mean, sd){
+    return 0.5*(1+erf((x-mean)/(sd*Math.SQRT2)));
+  }
+  function invNormalCDF(p){
+    if (p <= 0) p = 1e-8;
+    if (p >= 1) p = 1-1e-8;
+    const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+    const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+    const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+    const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+    const plow=0.02425, phigh=1-plow;
+    let q,r;
+    if (p < plow){
+      q=Math.sqrt(-2*Math.log(p));
+      return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    } else if (p <= phigh){
+      q=p-0.5; r=q*q;
+      return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+    } else {
+      q=Math.sqrt(-2*Math.log(1-p));
+      return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    }
+  }
+  function gradeFromTopPercent(tp){
+    const cum=[4,11,23,40,60,77,89,96,100];
+    for (let i=0;i<9;i++){ if (tp <= cum[i]+1e-9) return i+1; }
+    return 9;
+  }
+
+  function englishGradeFromScore(score){
+    const cuts = [90,80,70,60,50,40,30,20,0];
+    for (let i=0;i<cuts.length;i++){ if (score >= cuts[i]) return i+1; }
+    return 9;
+  }
+
+  function calcEnglish(){
+    const score = parseFloat(document.getElementById('percentile').value);
+    if (isNaN(score) || score < 0 || score > 100){
+      alert('원점수는 0~100 사이 값으로 입력해주세요.');
+      return;
+    }
+    const grade = englishGradeFromScore(score);
+    document.getElementById('englishGrade').textContent = grade;
+    document.getElementById('englishScoreLabel').textContent = score;
+
+    compareRow.style.display = 'none';
+    singleRow.style.display = 'flex';
+    deltaBanner.style.display = 'none';
+
+    const detail = document.getElementById('detailBox');
+    detail.innerHTML = `
+      <div>영어는 절대평가이므로 재학생·졸업생 구성비와 무관하게 원점수 <b>${score}점</b>이면 항상 <b>${grade}등급</b>입니다.</div>
+      <div>단, 모의고사와 실제 수능은 시험 자체의 난이도가 달라서 같은 실력이어도 원점수가 달라질 수 있다는 점은 감안하세요.</div>
+    `;
+    resultsBox.style.display = 'block';
+  }
+
+  function calc(){
+    if (subject === 'english'){ calcEnglish(); return; }
+    compareRow.style.display = 'flex';
+    singleRow.style.display = 'none';
+    deltaBanner.style.display = 'block';
+
+    const d = DATA[subject];
+    const pctInput = parseFloat(document.getElementById('percentile').value);
+    let N1 = parseFloat(document.getElementById('numEdu').value);
+    let N2 = parseFloat(document.getElementById('numGrad').value);
+    let N3 = parseFloat(document.getElementById('numGed').value);
+    if (isNaN(N1)) N1 = DEFAULT_N.edu;
+    if (isNaN(N2)) N2 = DEFAULT_N.grad;
+    if (isNaN(N3)) N3 = DEFAULT_N.ged;
+
+    if (isNaN(pctInput) || pctInput <= 0 || pctInput >= 100){
+      alert('백분위는 0보다 크고 100보다 작은 값으로 입력해주세요.');
+      return;
+    }
+    const totalN = N1+N2+N3;
+    if (totalN <= 0){
+      alert('응시 인원을 1명 이상 입력해주세요.');
+      return;
+    }
+
+    const p = pctInput/100;
+    const z = invNormalCDF(p);
+    const score = d.edu.mean + z*d.edu.sd;
+
+    const above1 = N1*(1-normalCDF(score, d.edu.mean, d.edu.sd));
+    const above2 = N2*(1-normalCDF(score, d.grad.mean, d.grad.sd));
+    const above3 = N3*(1-normalCDF(score, d.ged.mean, d.ged.sd));
+    const totalAbove = above1+above2+above3;
+    const newPercentile = 100*(1-(totalAbove/totalN));
+    const clampedNewPct = Math.max(0.1, Math.min(99.9, newPercentile));
+
+    const topPercentMock = 100 - pctInput;
+    const topPercentExam = 100 - clampedNewPct;
+
+    const mockGrade = gradeFromTopPercent(topPercentMock);
+    const examGrade = gradeFromTopPercent(topPercentExam);
+
+    document.getElementById('mockGrade').textContent = mockGrade;
+    document.getElementById('examGrade').textContent = examGrade;
+    document.getElementById('mockPct').textContent = pctInput.toFixed(1);
+    document.getElementById('examPct').textContent = clampedNewPct.toFixed(1);
+
+    const banner = document.getElementById('deltaBanner');
+    const diff = examGrade - mockGrade;
+    if (diff > 0){
+      banner.textContent = `예상 ${diff}등급 하락`;
+      banner.className = 'delta-banner down';
+    } else if (diff === 0){
+      banner.textContent = '등급 유지 예상';
+      banner.className = 'delta-banner flat';
+    } else {
+      banner.textContent = `예상 ${Math.abs(diff)}등급 상승`;
+      banner.className = 'delta-banner flat';
+    }
+
+    const rank = Math.round(totalAbove) + 1;
+    const aboveGrad = Math.round(above2);
+    const detail = document.getElementById('detailBox');
+    detail.innerHTML = `
+      <div>추정 표준점수 (재학생 분포 기준): <b>${score.toFixed(1)}점</b></div>
+      <div>전체 ${totalN.toLocaleString('ko-KR')}명 중 예상 등수: 약 <b>${rank.toLocaleString('ko-KR')}등</b></div>
+      <div>이 중 당신보다 위에 있을 것으로 추정되는 졸업생 수: 약 <b>${aboveGrad.toLocaleString('ko-KR')}명</b></div>
+    `;
+
+    document.getElementById('results').style.display = 'block';
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', calc);
+  document.getElementById('percentile').addEventListener('keydown', e=>{ if(e.key==='Enter') calc(); });
+})();
+</script>
+
+</body>
+</html>
