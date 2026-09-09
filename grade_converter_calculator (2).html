@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5등급제 → 9등급제 환산 계산기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#1c2b3a;
+    --paper:#f6f2e9;
+    --paper-deep:#efe8d8;
+    --gold:#a97a2f;
+    --gold-soft:#c99a4f;
+    --line:#cbbfa1;
+    --danger:#8a3324;
+    --good:#2f5d4f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    line-height:1.6;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{
+    border-bottom:3px solid var(--ink);
+    padding-bottom:20px;
+    margin-bottom:36px;
+  }
+  header .kicker{
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--gold);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:30px;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:14.5px;
+    color:#4a4237;
+    max-width:60ch;
+  }
+
+  .input-block{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:26px 28px;
+    margin-bottom:30px;
+    box-shadow: 3px 3px 0 var(--paper-deep);
+  }
+  .input-block label{
+    display:block;
+    font-size:14px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .input-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  input[type=number]{
+    font-size:22px;
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    width:140px;
+    padding:10px 12px;
+    border:2px solid var(--ink);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input[type=number]:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .hint{
+    font-size:12.5px;
+    color:#6b6255;
+    margin-top:10px;
+  }
+  .range-note{
+    font-size:12.5px;
+    color:var(--danger);
+    margin-top:6px;
+    display:none;
+  }
+
+  .mode-toggle{
+    display:flex;
+    gap:0;
+    margin-bottom:18px;
+    border:1px solid var(--ink);
+    width:fit-content;
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .mode-toggle button{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:13px;
+    font-weight:700;
+    padding:9px 18px;
+    border:none;
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .mode-toggle button.active{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .mode-toggle button:not(.active):hover{
+    background:var(--paper-deep);
+  }
+
+  .subject-panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:24px 26px;
+    margin-bottom:30px;
+    box-shadow: 3px 3px 0 var(--paper-deep);
+  }
+  .subject-panel h3{
+    font-family:'Noto Serif KR', serif;
+    font-size:16px;
+    margin:0 0 4px;
+  }
+  .subject-panel .panel-hint{
+    font-size:12.5px;
+    color:#6b6255;
+    margin-bottom:18px;
+  }
+  .subject-table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  .subject-table th{
+    text-align:left;
+    font-size:12px;
+    color:#6b6255;
+    font-weight:700;
+    padding:0 8px 8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .subject-table td{
+    padding:8px 8px 8px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  .subject-table tr:last-child td{border-bottom:none;}
+  .subject-table td.subj-name{
+    font-weight:700;
+    font-size:14px;
+  }
+  .subject-table input[type=text]{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:14px;
+    padding:6px 8px;
+    border:1.5px solid var(--line);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--ink);
+    width:100%;
+    min-width:90px;
+  }
+  .subject-table select, .subject-table input[type=number]{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:14px;
+    padding:6px 8px;
+    border:1.5px solid var(--line);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--ink);
+    width:100%;
+    max-width:90px;
+  }
+  .subject-table select:focus, .subject-table input:focus{
+    outline:2px solid var(--gold);
+    outline-offset:1px;
+    border-color:var(--gold);
+  }
+  .subject-table td.col-del{
+    width:30px;
+    text-align:center;
+  }
+  .row-del-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--danger);
+    width:26px;
+    height:26px;
+    line-height:1;
+    font-size:15px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .row-del-btn:hover{background:#fbeceb;}
+
+  .add-row-btn{
+    margin-top:14px;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:13px;
+    font-weight:700;
+    padding:9px 16px;
+    border:1.5px dashed var(--gold-soft);
+    background:var(--paper);
+    color:var(--gold);
+    border-radius:2px;
+    cursor:pointer;
+    width:100%;
+  }
+  .add-row-btn:hover{background:#faf2e2;}
+
+  .semester-quickset{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .semester-quickset button{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:12px;
+    font-weight:700;
+    padding:6px 12px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:#4a4237;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .semester-quickset button:hover{
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+
+  .semester-blocks{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  @media (max-width:640px){ .semester-blocks{grid-template-columns:1fr;} }
+
+  .semester-block{
+    border:1px solid var(--line);
+    background:var(--paper);
+  }
+  .semester-block-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:8px 12px;
+    background:var(--paper-deep);
+    border-bottom:1px solid var(--line);
+  }
+  .semester-block-header .sem-title{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:13.5px;
+  }
+  .semester-block-header .sem-avg{
+    font-size:11px;
+    color:#6b6255;
+  }
+  .semester-block .subject-table{
+    padding:6px 10px 2px;
+  }
+  .semester-block .subject-table th{
+    font-size:10.5px;
+    padding:0 6px 6px 0;
+  }
+  .semester-block .subject-table td{
+    padding:5px 6px 5px 0;
+  }
+  .semester-block .subject-table input[type=text]{
+    min-width:0;
+    font-size:13px;
+    padding:5px 6px;
+  }
+  .semester-block .subject-table select,
+  .semester-block .subject-table input[type=number]{
+    font-size:13px;
+    padding:5px 6px;
+    max-width:64px;
+  }
+  .semester-block-add{
+    display:block;
+    width:100%;
+    background:none;
+    border:none;
+    border-top:1px dashed var(--line);
+    color:var(--gold);
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:12px;
+    font-weight:700;
+    padding:8px;
+    cursor:pointer;
+  }
+  .semester-block-add:hover{background:#faf2e2;}
+  .semester-block-empty{
+    font-size:12px;
+    color:#a89e8c;
+    padding:10px 12px;
+  }
+
+  .subject-summary{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:18px;
+    padding-top:16px;
+    border-top:2px solid var(--ink);
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .subject-summary .label{
+    font-size:13px;
+    color:#4a4237;
+  }
+  .subject-summary .value{
+    font-family:'Noto Serif KR', serif;
+    font-size:26px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .subject-summary .count{
+    font-size:12px;
+    color:#8a8172;
+  }
+
+  .section-label{
+    font-size:13px;
+    font-weight:700;
+    color:#6b6255;
+    margin:0 0 12px 2px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label .line{
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  .compare-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  @media (max-width:560px){ .compare-grid{grid-template-columns:1fr;} }
+
+  .region-card{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .region-card.busan{border-left:4px solid #4a6fa5;}
+  .region-card.gg{border-left:4px solid #7a5c99;}
+  .region-card .region-info{min-width:0;}
+  .region-card .region-name{
+    font-size:11.5px;
+    font-weight:700;
+    color:#6b6255;
+  }
+  .region-card .region-scope{
+    font-size:10px;
+    color:#8a8172;
+  }
+  .region-card .big-number{
+    font-family:'Noto Serif KR', serif;
+    font-size:22px;
+    font-weight:700;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .region-card.busan .big-number{color:#4a6fa5;}
+  .region-card.gg .big-number{color:#7a5c99;}
+  .region-card .meta-row{
+    font-size:11px;
+    color:#6b6255;
+    white-space:nowrap;
+  }
+
+  .results{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  @media (max-width:560px){ .results{grid-template-columns:1fr;} }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .card.simple{border-left:4px solid var(--good);}
+  .card.estimate{border-left:4px solid var(--gold);}
+  .card .card-info{min-width:0;}
+  .card .tag{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.01em;
+    color:#6b6255;
+  }
+  .card h2{
+    font-family:'Noto Serif KR', serif;
+    font-size:12.5px;
+    margin:0;
+    color:#4a4237;
+    font-weight:700;
+  }
+  .big-number{
+    font-family:'Noto Serif KR', serif;
+    font-size:22px;
+    font-weight:700;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .card.simple .big-number{color:var(--good);}
+  .card.estimate .big-number{color:var(--gold);}
+  .sub{
+    display:none;
+  }
+  .meta-row{
+    font-size:11px;
+    color:#6b6255;
+    white-space:nowrap;
+  }
+
+  .method{
+    background:var(--paper-deep);
+    border:1px solid var(--line);
+    padding:18px 22px;
+    font-size:13px;
+    color:#4a4237;
+    margin-bottom:16px;
+  }
+  .method summary{
+    cursor:pointer;
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+  .method .body{margin-top:12px;}
+  .method code{
+    background:#fff;
+    padding:1px 6px;
+    border:1px solid var(--line);
+    font-size:12px;
+  }
+
+  .caveat{
+    border-left:3px solid var(--danger);
+    background:#fff;
+    padding:14px 18px;
+    font-size:13px;
+    color:#4a2c25;
+    margin-bottom:36px;
+  }
+  .caveat strong{color:var(--danger);}
+
+  .uni-section{
+    margin-bottom:36px;
+  }
+  .uni-banner{
+    background:#f3ecda;
+    border:1.5px solid var(--gold-soft);
+    border-left:4px solid var(--gold);
+    padding:14px 18px;
+    font-size:13px;
+    color:#5c4a1f;
+    margin-bottom:16px;
+  }
+  .uni-banner strong{color:var(--gold);}
+  .uni-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:560px){ .uni-grid{grid-template-columns:1fr;} }
+  .uni-card{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:16px 18px;
+  }
+  .uni-card .uni-track{
+    font-size:11.5px;
+    font-weight:700;
+    color:#6b6255;
+    margin-bottom:8px;
+  }
+  .uni-card .uni-entry{
+    font-size:14px;
+    line-height:1.5;
+  }
+  .uni-card .uni-entry .school{
+    font-weight:700;
+    color:var(--ink);
+  }
+  .uni-out-of-range{
+    font-size:13px;
+    color:#8a8172;
+    padding:10px 0;
+  }
+
+  /* ===== 공유 카드 ===== */
+  .share-section{
+    margin-bottom:36px;
+  }
+  .share-actions{
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .share-actions button{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:13.5px;
+    font-weight:700;
+    padding:11px 20px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  #btnSaveImage{
+    background:var(--ink);
+    color:var(--paper);
+    border:1px solid var(--ink);
+  }
+  #btnSaveImage:hover{background:#2a3d52;}
+  #btnSaveImage:disabled{opacity:0.5;cursor:wait;}
+  #btnSaveLocal, #btnClearLocal{
+    background:#fff;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  #btnSaveLocal:hover, #btnClearLocal:hover{border-color:var(--gold);color:var(--gold);}
+  .storage-status{
+    font-size:12px;
+    color:#8a8172;
+    margin-top:8px;
+  }
+
+  #shareCard{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    padding:28px 30px;
+    max-width:640px;
+  }
+  #shareCard .sc-title{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:19px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:12px;
+    margin-bottom:16px;
+  }
+  #shareCard .sc-title .sc-date{
+    display:block;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:11px;
+    font-weight:400;
+    color:#8a8172;
+    margin-top:4px;
+  }
+  #shareCard .sc-block{
+    margin-bottom:16px;
+  }
+  #shareCard .sc-label{
+    font-size:11px;
+    font-weight:700;
+    color:#6b6255;
+    margin-bottom:6px;
+  }
+  #shareCard .sc-subjects{
+    font-size:12.5px;
+    color:#4a4237;
+    line-height:1.7;
+  }
+  #shareCard .sc-avg-row{
+    display:flex;
+    gap:16px;
+    margin-bottom:14px;
+  }
+  #shareCard .sc-avg-box{
+    flex:1;
+    background:#fff;
+    border:1px solid var(--line);
+    padding:10px 12px;
+  }
+  #shareCard .sc-avg-box .sc-avg-name{font-size:11px;color:#6b6255;margin-bottom:3px;}
+  #shareCard .sc-avg-box .sc-avg-val{font-family:'Noto Serif KR', serif;font-weight:700;font-size:20px;}
+  #shareCard .sc-conv-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  #shareCard .sc-conv-box{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:10px 12px;
+  }
+  #shareCard .sc-conv-box .sc-conv-name{font-size:10.5px;color:#6b6255;margin-bottom:2px;}
+  #shareCard .sc-conv-box .sc-conv-val{font-family:'Noto Serif KR', serif;font-weight:700;font-size:17px;}
+  #shareCard .sc-conv-box .sc-conv-pct{font-size:10.5px;color:#8a8172;}
+  #shareCard .sc-uni-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  #shareCard .sc-uni-box{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:9px 10px;
+    font-size:11.5px;
+  }
+  #shareCard .sc-uni-box .sc-uni-name{font-size:10px;color:#6b6255;margin-bottom:3px;font-weight:700;}
+  #shareCard .sc-footnote{
+    font-size:10px;
+    color:#8a8172;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+    line-height:1.6;
+  }
+
+  footer{
+    font-size:11.5px;
+    color:#847a68;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">부산광역시교육청 관내 고교 5등급제 누적 등급평균 분석자료 기반</div>
+    <h1>5등급제 → 9등급제 환산 계산기</h1>
+    <p>5등급제 등급평균 하나를 입력하면 ① 1학년2학기까지 부산·경기진협 비교, ② 2학년1학기까지(현재, 부산) 단순 변환, ③ 3학년1학기까지 추세 연장 추정(부산) — 총 네 개의 값을 한번에 비교해서 보여줍니다.</p>
+  </header>
+
+  <div class="mode-toggle">
+    <button type="button" id="btnModeSubject" class="active">과목별로 계산</button>
+    <button type="button" id="btnModeDirect">등급평균 직접 입력</button>
+  </div>
+
+  <div class="subject-panel" id="subjectPanel">
+    <h3>과목별 석차등급 입력</h3>
+    <div class="panel-hint">학기별로 나누어 입력하세요. 학기마다 등급이 다르거나, 학점제로 한 학기에 같은 교과가 여러 과목으로 나뉘어도(예: 사회탐구1·2·3) 해당 학기 표에 행을 필요한 만큼 추가하면 됩니다.</div>
+    <div class="semester-quickset">
+      <button type="button" id="btnQuickFill">2학년1학기까지 기본값 채우기 (국영수 4학점·나머지 3학점, 5과목)</button>
+      <button type="button" id="btnClearAll">전체 비우기</button>
+    </div>
+
+    <div class="semester-blocks" id="semesterBlocks"></div>
+
+    <div class="subject-summary">
+      <div>
+        <div class="label">경기진협용 · 단순평균(학점 미반영)</div>
+        <div class="value" id="computedAvgSimple">–</div>
+      </div>
+      <div>
+        <div class="label">부산용 · 학점가중평균</div>
+        <div class="value" id="computedAvgWeighted">–</div>
+      </div>
+    </div>
+    <div class="count" id="computedCount" style="margin-top:8px;">과목수 0개</div>
+  </div>
+
+  <div class="input-block" id="directPanel" style="display:none;">
+    <label for="gradeInputBusan">부산용 등급평균 (학점가중평균 기준)</label>
+    <div class="input-row">
+      <input type="number" id="gradeInputBusan" min="1" max="5" step="0.01" value="1.50">
+      <span style="font-size:13px;color:#6b6255;">1.00 ~ 5.00</span>
+    </div>
+    <div class="hint" style="margin-bottom:16px;">부산의 2학년1학기·3학년1학기 추정 카드에 쓰입니다.</div>
+
+    <label for="gradeInputGG">경기진협용 등급평균 (단순평균 기준)</label>
+    <div class="input-row">
+      <input type="number" id="gradeInputGG" min="1" max="5" step="0.01" value="1.50">
+      <span style="font-size:13px;color:#6b6255;">1.00 ~ 5.00</span>
+    </div>
+    <div class="hint">경기진협 카드에 쓰입니다. 학점(단위수)을 반영하지 않은 단순평균 기준입니다.</div>
+    <div class="range-note" id="rangeNote">입력값은 1.00~5.00 범위여야 합니다.</div>
+  </div>
+
+  <div class="section-label"><span>1학년2학기까지 — 지역 비교</span><span class="line"></span></div>
+  <div class="compare-grid">
+    <div class="region-card busan">
+      <div class="region-info">
+        <div class="region-name">부산광역시교육청</div>
+        <div class="region-scope">98개교 15,978명 · 1~2학기</div>
+      </div>
+      <div>
+        <div class="big-number" id="busanStage1Grade">–</div>
+        <div class="meta-row">상위 <span id="busanStage1Pct">–</span></div>
+      </div>
+    </div>
+    <div class="region-card gg">
+      <div class="region-info">
+        <div class="region-name">경기진학지도협의회</div>
+        <div class="region-scope">63개교 16,110명 · 1~2학기</div>
+      </div>
+      <div>
+        <div class="big-number" id="ggStage1Grade">–</div>
+        <div class="meta-row">상위 <span id="ggStage1Pct">–</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label"><span>2학년1학기까지 · 3학년1학기 추정 — 부산 기준</span><span class="line"></span></div>
+  <div class="results">
+    <div class="card simple">
+      <div class="card-info">
+        <div class="tag">단순 변환</div>
+        <h2>2학년1학기까지(현재)</h2>
+      </div>
+      <div>
+        <div class="big-number" id="simpleGrade">–</div>
+        <div class="meta-row">상위 <span id="simplePct">–</span></div>
+      </div>
+    </div>
+
+    <div class="card estimate">
+      <div class="card-info">
+        <div class="tag">추세 연장 추정</div>
+        <h2>3학년1학기까지</h2>
+      </div>
+      <div>
+        <div class="big-number" id="estGrade">–</div>
+        <div class="meta-row">상위 <span id="estPct">–</span></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="method">
+    <summary>계산 방식 자세히 보기</summary>
+    <div class="body">
+      <p><strong>1학년2학기까지 — 부산</strong>: 입력한 등급평균을 부산교육청 자료의 "1~1-2(B)" 열(1학년 1·2학기 누적 실측, 98개교 15,978명)에서 선형보간해 누적비를 구하고, 부산 자료의 9등급제 환산표(24학년도 고3 15,670명 코호트에 percentile로 매칭)에 대응시킨 값입니다.</p>
+      <p><strong>1학년2학기까지 — 경기진협</strong>: 같은 입력값을 경기진학지도협의회 협력교 자료(63개교 16,110명, 1~2학기 12과목 누적)의 등급평균–누적비–환산9등급 표에서 선형보간한 값입니다. 경기진협 자료에는 9등급 환산 산출 방식이 별도로 명시되어 있지 않아, <strong>부산의 환산 방식과 동일한 기준인지는 확인되지 않습니다.</strong> 두 값은 각 기관 내에서는 유효하지만, 기관 간 절대 비교보다는 같은 등급평균이 두 코호트에서 어느 정도 위치인지 참고하는 용도로 보시는 게 안전합니다.</p>
+      <p><strong>2학년1학기까지(현재) — 부산</strong>: 부산 자료 1페이지에 있는, 최상위 구간(1.00~1.50)의 촘촘한 실측점(1.00, 1.04, 1.08, 1.16, 1.24, 1.33, 1.42, 1.50)을 포함한 정밀 그리드에서 누적비를 보간해 9등급제 환산표에 대응시킵니다. 3페이지의 25개 대표점만 쓸 때보다 최상위권 오차가 줄어듭니다.</p>
+      <p><strong>3학년1학기까지(추정) — 부산</strong>: B(1~1-2)는 25개 대표점에서만 실측되어 있어, 변화율 계산 시에는 C도 같은 25개 대표점 그리드에서 구해 <code>r = C / B</code>를 계산합니다(위 "현재" 카드의 정밀 그리드 값과는 소수점 이하에서 미세한 차이가 있을 수 있음). 이 변화율이 앞으로 2개 학기(2학년2학기, 3학년1학기)에도 동일하게 유지된다고 가정하고 <code>추정 누적비 = C × r²</code>로 3학년1학기 누적비를 추정한 뒤, 같은 9등급제 환산표에 대응시킵니다.</p>
+      <p>이 방식을 등급평균 1.00 지점에 적용하면 추정 누적비는 약 0.19%로 계산되며, 이는 부산교육청 자료에 실제로 명시된 "3학년1학기까지 등급평균 1.00 유지 학생 0.2%~0.4% 예상"이라는 공식 추정과 근접합니다. 다만 이 공식 추정치는 단순 수치 추세 연장이 아니라 고교학점제 이수인원 감소, 학기별 경쟁 심화 등 구조적 요인을 함께 고려한 것이므로, 계산기의 추정값과 정확히 일치하지는 않을 수 있습니다.</p>
+    </div>
+  </details>
+
+  <div class="caveat">
+    <strong>주의</strong> — Mode B는 3개 시점(1학기, 1~2학기, 1~2학년1학기)의 변화 패턴만으로 산출한 통계적 추세 연장이며, 공식 발표 수치가 아닙니다. 특히 최상위 구간(등급평균 1.0대 초반)에서는 표본이 매우 적어 추정 오차가 커질 수 있습니다. 참고용으로만 활용하시고, 실제 입시 상담은 학교 및 공식 자료를 함께 확인하시기 바랍니다.
+  </div>
+
+  <div class="uni-section">
+    <div class="section-label"><span>경기진협 제안 수시 지원 가능 대학 (참고용)</span><span class="line"></span></div>
+    <div class="uni-banner">
+      <strong>⚠ 경기진협 자료의 예시일 뿐, 합격을 보장하지 않습니다.</strong> 대입정보포털 '어디가'의 2025학년도 교과·종합전형 70% 컷을 근거로 경기진협이 자체적으로 제안한 예시 모집단위이며, 수능최저학력기준·서류평가·면접 등 실제 전형요소는 반영되지 않았습니다. 등급평균 3.000(누적비 약 52%) 이하 구간만 원자료에 공개되어 있습니다. <strong>참고용으로만 보시고, 실제 지원 여부는 반드시 대학 모집요강과 입시 전문가 상담을 통해 확인하세요.</strong>
+    </div>
+    <div class="uni-grid">
+      <div class="uni-card">
+        <div class="uni-track">교과전형 · 인문계열</div>
+        <div class="uni-entry" id="uniHumanGyo">–</div>
+      </div>
+      <div class="uni-card">
+        <div class="uni-track">종합전형 · 인문계열</div>
+        <div class="uni-entry" id="uniHumanJong">–</div>
+      </div>
+      <div class="uni-card">
+        <div class="uni-track">교과전형 · 자연계열</div>
+        <div class="uni-entry" id="uniNatGyo">–</div>
+      </div>
+      <div class="uni-card">
+        <div class="uni-track">종합전형 · 자연계열</div>
+        <div class="uni-entry" id="uniNatJong">–</div>
+      </div>
+    </div>
+    <div class="hint" id="uniMatchNote" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="share-section">
+    <div class="section-label"><span>결과 이미지로 공유</span><span class="line"></span></div>
+    <div class="share-actions">
+      <button type="button" id="btnSaveImage">🖼 이미지로 저장</button>
+      <button type="button" id="btnSaveLocal">💾 이 브라우저에 저장</button>
+      <button type="button" id="btnClearLocal">저장값 지우기</button>
+    </div>
+    <div class="storage-status" id="storageStatus"></div>
+
+    <div id="shareCard">
+      <div class="sc-title">5등급제 → 9등급제 환산 결과<span class="sc-date" id="scDate"></span></div>
+
+      <div class="sc-block">
+        <div class="sc-label">입력한 과목 성적</div>
+        <div class="sc-subjects" id="scSubjects">–</div>
+      </div>
+
+      <div class="sc-avg-row">
+        <div class="sc-avg-box">
+          <div class="sc-avg-name">경기진협용 · 단순평균</div>
+          <div class="sc-avg-val" id="scAvgSimple">–</div>
+        </div>
+        <div class="sc-avg-box">
+          <div class="sc-avg-name">부산용 · 학점가중평균</div>
+          <div class="sc-avg-val" id="scAvgWeighted">–</div>
+        </div>
+      </div>
+
+      <div class="sc-block">
+        <div class="sc-label">9등급제 환산 결과</div>
+        <div class="sc-conv-grid">
+          <div class="sc-conv-box">
+            <div class="sc-conv-name">부산 · 1학년2학기까지</div>
+            <div class="sc-conv-val" id="scBusanStage1">–</div>
+            <div class="sc-conv-pct" id="scBusanStage1Pct"></div>
+          </div>
+          <div class="sc-conv-box">
+            <div class="sc-conv-name">경기진협 · 1학년2학기까지</div>
+            <div class="sc-conv-val" id="scGgStage1">–</div>
+            <div class="sc-conv-pct" id="scGgStage1Pct"></div>
+          </div>
+          <div class="sc-conv-box">
+            <div class="sc-conv-name">부산 · 2학년1학기까지(현재)</div>
+            <div class="sc-conv-val" id="scSimple">–</div>
+            <div class="sc-conv-pct" id="scSimplePct"></div>
+          </div>
+          <div class="sc-conv-box">
+            <div class="sc-conv-name">부산 · 3학년1학기(추정)</div>
+            <div class="sc-conv-val" id="scEst">–</div>
+            <div class="sc-conv-pct" id="scEstPct"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-block">
+        <div class="sc-label">경기진협 제안 수시 지원 가능 대학 (참고용)</div>
+        <div class="sc-uni-grid">
+          <div class="sc-uni-box"><div class="sc-uni-name">교과·인문</div><div id="scUniHumanGyo">–</div></div>
+          <div class="sc-uni-box"><div class="sc-uni-name">종합·인문</div><div id="scUniHumanJong">–</div></div>
+          <div class="sc-uni-box"><div class="sc-uni-name">교과·자연</div><div id="scUniNatGyo">–</div></div>
+          <div class="sc-uni-box"><div class="sc-uni-name">종합·자연</div><div id="scUniNatJong">–</div></div>
+        </div>
+      </div>
+
+      <div class="sc-footnote">
+        부산광역시교육청학력개발원 · 경기진학지도협의회 자료 기반 참고용 계산 결과입니다. 대학 예시는 경기진협 자체 제안이며 합격을 보장하지 않습니다. 3학년1학기 추정값은 통계적 추세 연장이며 공식 발표 수치가 아닙니다.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    출처: 부산광역시교육청학력개발원 진로진학지원센터, 「관내 고교 5등급제 2학년1학기 누적 등급평균 분석 자료」 (現 고2, 98개교 15,978명 / 9등급제 비교군: 24학년도 고3, 94개교 15,670명)<br>
+    경기진학지도협의회 자료개발국, 「경기진협 협력교 2025학년도 1학년 1~2학기 성적 분석자료」 (협력교 63개교 16,110명)
+  </footer>
+
+</div>
+
+<script>
+// 부산교육청 자료 — 5등급제 등급평균 anchor points
+const gradeAnchors = [1.00,1.16,1.33,1.50,1.66,1.83,2.00,2.16,2.33,2.50,2.66,2.83,3.00,3.16,3.33,3.50,3.66,3.83,4.00,4.16,4.33,4.50,4.66,4.83,5.00];
+
+// 1~2학기(고1) 누적비(%) — column B
+const Bvals = [1.30,2.76,4.81,7.08,9.51,13.03,17.42,21.04,26.02,31.39,36.58,42.93,49.98,55.84,62.84,69.09,74.08,79.74,84.90,88.48,91.75,94.07,95.66,97.03,100.00];
+
+// 1~2학년1학기 누적비(%) — column C
+const Cvals = [0.68,2.23,4.29,6.49,8.89,12.41,16.58,20.64,25.45,31.00,36.37,42.75,49.96,56.15,62.92,69.29,74.93,80.30,85.54,89.21,92.51,94.58,96.16,97.48,100.00];
+
+// 누적비(%) -> 9등급제 환산 등급평균 (2학년1학기 실측 + 등급평균1.00 구간 공식 예상치 포함)
+const pcts   = [0.20,0.30,0.40,0.68,1.01,1.40,2.23,3.16,4.29,5.44,6.49,8.89,12.41,16.58,20.64,25.45,31.00,36.37,42.75,49.96,56.15,62.92,69.29,74.93,80.30,85.54,89.21,92.51,94.58,96.16,97.48,100.00];
+const grade9 = [1.09,1.15,1.19,1.28,1.38,1.47,1.68,1.87,2.07,2.25,2.39,2.66,2.98,3.30,3.58,3.87,4.18,4.45,4.72,5.03,5.30,5.58,5.87,6.12,6.40,6.71,6.99,7.28,7.54,7.80,8.12,9.00];
+
+// 1~2학년1학기(C) 누적비 -> 등급평균 정밀 그리드
+// 부산 자료 1페이지에는 25개 대표점 외에 최상위 구간(1.00~1.50)에 더 촘촘한
+// 실측점(1.04, 1.08, 1.24, 1.42)이 별도로 존재함. 상위권일수록 등급평균 변화에
+// 비해 누적비가 민감하게 움직이므로, 이 구간은 촘촘한 실측점을 그대로 사용해
+// 보간 정확도를 높임 (3페이지의 25개 대표점만 쓸 때보다 최상위권 오차가 줄어듦).
+const gradeAnchorsFineC = [1.00,1.04,1.08,1.16,1.24,1.33,1.42,1.50,1.66,1.83,2.00,2.16,2.33,2.50,2.66,2.83,3.00,3.16,3.33,3.50,3.66,3.83,4.00,4.16,4.33,4.50,4.66,4.83,5.00];
+const CvalsFine        = [0.68,1.01,1.40,2.23,3.16,4.29,5.44,6.49,8.89,12.41,16.58,20.64,25.45,31.00,36.37,42.75,49.96,56.15,62.92,69.29,74.93,80.30,85.54,89.21,92.51,94.58,96.16,97.48,100.00];
+
+// 경기진학지도협의회 협력교 63개교 16,110명 — 1~2학기(12과목) 누적비 및 자체 환산 9등급
+const ggGrade = [1.000,1.083,1.167,1.250,1.333,1.417,1.500,1.583,1.667,1.750,1.833,1.917,2.000,2.083,2.167,2.250,2.333,2.417,2.500,2.583,2.667,2.750,2.833,2.917,3.000,3.083,3.167,3.250,3.333,3.417,3.500,3.583,3.667,3.750,3.833,3.917,4.000,4.083,4.167,4.250,4.333,4.417,4.500,4.583,4.667,4.750,4.833,4.917,5.000];
+const ggPct   = [1.20,1.95,3.09,4.01,5.15,6.38,7.81,9.06,10.90,12.45,14.54,16.36,18.92,20.86,23.28,25.62,28.36,30.84,33.63,36.19,39.32,42.15,45.68,48.62,52.12,55.07,58.30,61.22,64.31,66.93,69.88,72.28,74.95,77.50,80.30,82.53,85.06,86.93,89.01,90.43,91.90,92.87,94.00,94.76,95.67,96.40,97.19,97.88,100.00];
+const ggGrade9 = [1.39,1.53,1.73,1.87,2.03,2.18,2.31,2.45,2.61,2.73,2.88,3.00,3.16,3.28,3.41,3.54,3.68,3.80,3.95,4.08,4.21,4.34,4.48,4.61,4.75,4.87,5.00,5.12,5.24,5.33,5.47,5.59,5.71,5.83,5.98,6.09,6.25,6.36,6.50,6.61,6.72,6.81,6.94,7.05,7.18,7.30,7.45,7.62,8.97];
+
+// 경기진협 자료 「환산 9등급 대응 2025 대입 70% cut 대학」 예시 (등급평균 1.000~3.000 구간, ggGrade[0..24]와 동일 인덱스)
+// 참고용 데이터입니다 — 실제 지원 가능성을 보장하지 않습니다.
+const uniHumanGyoList = [
+  '고려대 학교추천 정치외교학과','성균관대 학교장추천 글로벌경영학과','한양대 교과(추천형) 영어영문학과','건국대 KU지역균형 경영학과',
+  '서울시립대 지역균형 경영학부','숭실대 학생부우수자 금융학부','서울과학기술대 고교추천 행정학과','덕성여대 고교추천 글로벌융합대학(인문)',
+  '단국대 지역균형선발 정치외교학과','인천대 교과성적우수자 법학부','한양대(에) 지역균형선발 경제학부','인천대 지역균형 자유전공학부(인문)',
+  '경기대 교과성적우수자 사회과학대학(통합)','동덕여대 학생부교과우수자 일어일본학전공','안양대 아리학생부교과 러시아언어문화학과','강남대 지역균형 글로벌문화콘텐츠대학',
+  '협성대 학생부교과우수자 세무회계학과','성결대 교과성적우수자 경영학과','차의과대 지역균형선발 미래융합대학','한세대 학생부교과우수자 사회복지학전공',
+  '경동대 일반학생 경찰학과','평택대 PTU추천 국제지역및신학자율전공','강서대 일반학생 상담심리학과','협성대 미래역량우수자 사회복지학과',
+  '서울신학대 일반 아동보육학과'
+];
+const uniHumanJongList = [
+  '서울대 지역균형 인문계열','서울대 일반 역사교육과','연세대 활동우수형 사회학과','고려대 계열적합형 교육학과',
+  '서강대 일반 정치외교학과','중앙대 CAU융합형 경영학전공','이화여대 미래인재서류 심리학과','한국외대 학생부종합면접 경영학부',
+  '건국대 KU자기추천 국제무역학과','성신여대 자기주도인재 미디어커뮤니케이션학과','숭실대 SSU미래인재 법학과','단국대 DKU인재서류 사회계열광역',
+  '서울과기대 학교생활우수자 행정학과','인하대 인하미래인재(면) 경제학과','덕성여대 덕성인재Ⅱ 글로벌융합대학(인문)','아주대 ACE 사학과',
+  '경기대 KGU학생부종합 경영학부','가천대 가천바람개비 법과대학','한국외대 학생부종합(서) 헝가리학과','광운대 광운참빛인재 경영학전공',
+  '한양대(에) 서류형 LIONS자율전공학부(인)','성신여대 자기주도인재 프랑스어문ㆍ문화학과','강남대 학교생활우수자1 자유전공학부','대진대 윈윈대진 미디어커뮤니케이션학과',
+  '성공회대 열린인재 인문융합콘텐츠학부'
+];
+const uniNatGyoList = [
+  '연세대 추천형 사회환경시스템공학부','한양대 교과(추천형) 기계공학부','중앙대 지역균형 간호학과','서울과학기술대 고교추천 전자공학과',
+  '국민대 교과성적우수자 미래융합전공(B)','세종대 지역균형 인공지능데이터사이언스학과','인하대 지역균형 환경공학과','명지대 학교장추천 환경시스템공학전공',
+  '인천대 지역균형 생명과학전공','가천대 학생부우수자 컴퓨터공학과','명지대 교과면접 산업경영공학과','인천대 교과성적우수자 환경공학전공',
+  '경기대 교과성적우수자 창의공과대학(통합)','서울여대 교과우수자 식품생명공학','수원대 교과우수 컴퓨터공학부','신한대 일반 에너지공학과',
+  '안양대 아리학생부교과 화장품발명디자인학과','강남대 지역균형 컴퓨터공학부','대진대 학생부우수자 전기공학과','성결대 교과성적우수자 공학계열자율전공학부',
+  '대진대 학교장추천 보건경영학과','한경국립대 일반 ICT로봇기계공학부','한세대 학생부교과우수자 IT학부','평택대 PTU추천 데이터정보학과',
+  '협성대 미래역량우수자 도시공학과'
+];
+const uniNatJongList = [
+  '서울대 일반 컴퓨터공학부','연세대 활동우수 물리학과','고려대 학업우수 수학교육과','경희대 네오르네상스 화학공학과',
+  '서울시립대 학생부종합Ⅰ 컴퓨터과학부','홍익대 학교생활우수자 컴퓨터공학과','동국대 DoDream 전자전기공학부','세종대 창의인재(면접) 생명시스템학부',
+  '서울과기대 학교생활우수자 환경공학과','숭실대 SSU미래인재 화학과','건국대 KU자기추천 건축학부','덕성여대 덕성인재Ⅰ 과학기술대학',
+  '아주대 ACE 프런티어과학학부','단국대 DKU인재면접형 전자전기공학과','인하대 인하미래인재(면) 이차전지융합학과','경기대 KGU학생부종합 사회에너지시스템공학과',
+  '가천대 가천바람개비 화공생명배터리공학부','명지대 명지인재면접 정보통신공학전공','안양대 아리학생부종합Ⅱ 식품영양학과','을지대 EU면접형 자연계열학부',
+  '삼육대 SW인재 인공지능융합학부','한국공학대 창의인재 나노반도체공학전공','강남대 학교생활우수자1 인공지능융합학부','한경국립대 잠재력우수자 동물응용과학전공',
+  '강남대 학교생활우수자1 컴퓨터공학부'
+];
+
+function interp(x, xs, ys){
+  if(x <= xs[0]) return ys[0];
+  if(x >= xs[xs.length-1]) return ys[ys.length-1];
+  for(let i=0;i<xs.length-1;i++){
+    if(x >= xs[i] && x <= xs[i+1]){
+      const t = (x - xs[i]) / (xs[i+1] - xs[i]);
+      return ys[i] + t * (ys[i+1] - ys[i]);
+    }
+  }
+  return ys[ys.length-1];
+}
+
+function fmtPct(p){
+  if(p < 1) return p.toFixed(2) + '%';
+  return p.toFixed(2) + '%';
+}
+
+function calculate(){
+  const rangeNote = document.getElementById('rangeNote');
+  let gBusan = parseFloat(document.getElementById('gradeInputBusan').value);
+  let gGG = parseFloat(document.getElementById('gradeInputGG').value);
+
+  if(isNaN(gBusan) || isNaN(gGG)){ return; }
+
+  let outOfRange = false;
+  if(gBusan < 1.00 || gBusan > 5.00){ outOfRange = true; gBusan = Math.min(Math.max(gBusan,1.00),5.00); }
+  if(gGG < 1.00 || gGG > 5.00){ outOfRange = true; gGG = Math.min(Math.max(gGG,1.00),5.00); }
+  rangeNote.style.display = outOfRange ? 'block' : 'none';
+
+  // 1~2학기(고1) 누적비 -> 9등급 환산 (부산, 학점가중평균 gBusan 사용)
+  const B = interp(gBusan, gradeAnchors, Bvals);
+  const busanStage1Grade9 = interp(B, pcts, grade9);
+
+  document.getElementById('busanStage1Pct').textContent = '상위 ' + fmtPct(B);
+  document.getElementById('busanStage1Grade').textContent = busanStage1Grade9.toFixed(2) + '등급';
+
+  // 1~2학기(고1) 누적비 -> 자체 환산 9등급 (경기진협, 단순평균 gGG 사용)
+  const ggP = interp(gGG, ggGrade, ggPct);
+  const ggG9 = interp(gGG, ggGrade, ggGrade9);
+
+  document.getElementById('ggStage1Pct').textContent = '상위 ' + fmtPct(ggP);
+  document.getElementById('ggStage1Grade').textContent = ggG9.toFixed(2) + '등급';
+
+  // 1~2학년1학기(현재) 누적비 -> 9등급 환산 (부산, 정밀 그리드 사용)
+  const Cdisplay = interp(gBusan, gradeAnchorsFineC, CvalsFine);
+  const simpleGrade9 = interp(Cdisplay, pcts, grade9);
+
+  document.getElementById('simplePct').textContent = '상위 ' + fmtPct(Cdisplay);
+  document.getElementById('simpleGrade').textContent = simpleGrade9.toFixed(2) + '등급';
+
+  // 3학년1학기 추정: B와 같은 25개 대표점 그리드에서 C를 구해 변화율 계산
+  // (B는 촘촘한 하위 그리드가 없어 대표점끼리 맞춰야 변화율이 일관됨)
+  const C = interp(gBusan, gradeAnchors, Cvals);
+  const ratio = B > 0 ? (C / B) : 1;
+  let estPct = C * ratio * ratio;
+  // 하한/상한 안전장치
+  estPct = Math.max(estPct, 0.05);
+  estPct = Math.min(estPct, 100);
+
+  const estGrade9 = interp(estPct, pcts, grade9);
+
+  document.getElementById('estPct').textContent = '상위 ' + fmtPct(estPct);
+  document.getElementById('estGrade').textContent = estGrade9.toFixed(2) + '등급';
+
+  // 경기진협 제안 수시 지원 가능 대학 (등급평균 1.000~3.000, 25개 지점 중 가장 가까운 값 매칭)
+  renderUniExamples(gGG);
+
+  if(typeof updateShareCard === 'function'){
+    updateShareCard();
+  }
+}
+
+function renderUniExamples(gGG){
+  const humanGyoEl = document.getElementById('uniHumanGyo');
+  const humanJongEl = document.getElementById('uniHumanJong');
+  const natGyoEl = document.getElementById('uniNatGyo');
+  const natJongEl = document.getElementById('uniNatJong');
+  const noteEl = document.getElementById('uniMatchNote');
+
+  const UNI_MAX_GRADE = ggGrade[24]; // 3.000
+
+  if(gGG > UNI_MAX_GRADE){
+    const msg = '<span class="uni-out-of-range">경기진협 자료는 등급평균 3.000(누적비 약 52%)까지만 대학 예시가 공개되어 있어, 입력하신 등급평균(약 ' + gGG.toFixed(2) + ')에는 해당 예시가 없습니다.</span>';
+    humanGyoEl.innerHTML = msg;
+    humanJongEl.innerHTML = msg;
+    natGyoEl.innerHTML = msg;
+    natJongEl.innerHTML = msg;
+    noteEl.textContent = '';
+    return;
+  }
+
+  // 가장 가까운 25개 대표점 인덱스 찾기
+  let bestIdx = 0, bestDiff = Infinity;
+  for(let i = 0; i <= 24; i++){
+    const diff = Math.abs(ggGrade[i] - gGG);
+    if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
+  }
+
+  function fmtEntry(text){
+    const parts = text.split(' ');
+    const school = parts[0];
+    const rest = text.slice(school.length);
+    return '<span class="school">' + school + '</span>' + rest;
+  }
+
+  humanGyoEl.innerHTML = fmtEntry(uniHumanGyoList[bestIdx]);
+  humanJongEl.innerHTML = fmtEntry(uniHumanJongList[bestIdx]);
+  natGyoEl.innerHTML = fmtEntry(uniNatGyoList[bestIdx]);
+  natJongEl.innerHTML = fmtEntry(uniNatJongList[bestIdx]);
+
+  noteEl.textContent = '경기진협용 등급평균 ' + gGG.toFixed(2) + ' → 가장 가까운 예시 지점: 등급평균 ' + ggGrade[bestIdx].toFixed(3) + ' (경기진협 자료 기준)';
+}
+
+document.getElementById('gradeInputBusan').addEventListener('input', calculate);
+document.getElementById('gradeInputGG').addEventListener('input', calculate);
+
+// ===== 과목별 성적 입력 패널 (학기별 블록) =====
+const SEMESTERS = [
+  {key:'11', label:'1학년 1학기'},
+  {key:'12', label:'1학년 2학기'},
+  {key:'21', label:'2학년 1학기'},
+  {key:'22', label:'2학년 2학기'},
+  {key:'31', label:'3학년 1학기'},
+  {key:'32', label:'3학년 2학기'}
+];
+
+function buildSemesterBlocks(){
+  const container = document.getElementById('semesterBlocks');
+  container.innerHTML = '';
+  SEMESTERS.forEach(sem => {
+    const block = document.createElement('div');
+    block.className = 'semester-block';
+    block.dataset.sem = sem.key;
+
+    const header = document.createElement('div');
+    header.className = 'semester-block-header';
+    header.innerHTML = '<span class="sem-title">' + sem.label + '</span><span class="sem-avg" id="semAvg_' + sem.key + '"></span>';
+    block.appendChild(header);
+
+    const table = document.createElement('table');
+    table.className = 'subject-table';
+    table.innerHTML = '<thead><tr><th>과목명</th><th>등급</th><th>학점</th><th></th></tr></thead><tbody id="subjectRows_' + sem.key + '"></tbody>';
+    block.appendChild(table);
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'semester-block-add';
+    addBtn.textContent = '+ 과목 추가';
+    addBtn.addEventListener('click', () => {
+      addSubjectRow(sem.key, '', 3, 3);
+      computeSubjectAverage();
+    });
+    block.appendChild(addBtn);
+
+    container.appendChild(block);
+  });
+}
+
+let rowSeq = 0;
+
+function addSubjectRow(semKey, name, grade, credit){
+  const tbody = document.getElementById('subjectRows_' + semKey);
+  if(!tbody) return;
+  const id = rowSeq++;
+  const tr = document.createElement('tr');
+  tr.dataset.rowId = id;
+
+  const tdName = document.createElement('td');
+  tdName.className = 'subj-name';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = '예: 국어, 생활과윤리';
+  nameInput.value = name || '';
+  tdName.appendChild(nameInput);
+  tr.appendChild(tdName);
+
+  const tdGrade = document.createElement('td');
+  const gradeSelect = document.createElement('select');
+  [1,2,3,4,5].forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v + '등급';
+    gradeSelect.appendChild(opt);
+  });
+  gradeSelect.value = grade || 3;
+  tdGrade.appendChild(gradeSelect);
+  tr.appendChild(tdGrade);
+
+  const tdCredit = document.createElement('td');
+  const creditInput = document.createElement('input');
+  creditInput.type = 'number';
+  creditInput.min = 1;
+  creditInput.max = 8;
+  creditInput.step = 1;
+  creditInput.value = credit || 3;
+  tdCredit.appendChild(creditInput);
+  tr.appendChild(tdCredit);
+
+  const tdDel = document.createElement('td');
+  tdDel.className = 'col-del';
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'row-del-btn';
+  delBtn.textContent = '×';
+  delBtn.addEventListener('click', () => {
+    tr.remove();
+    computeSubjectAverage();
+  });
+  tdDel.appendChild(delBtn);
+  tr.appendChild(tdDel);
+
+  tbody.appendChild(tr);
+}
+
+function computeSubjectAverage(){
+  let simpleSum = 0, simpleCount = 0;
+  let weightedSum = 0, weightedCount = 0;
+
+  SEMESTERS.forEach(sem => {
+    const rows = document.querySelectorAll('#subjectRows_' + sem.key + ' tr');
+    let semSimpleSum = 0, semCount = 0;
+
+    rows.forEach(tr => {
+      const grade = parseFloat(tr.querySelector('select').value);
+      const credit = parseFloat(tr.querySelector('input[type=number]').value) || 0;
+
+      simpleSum += grade;
+      simpleCount += 1;
+      weightedSum += grade * credit;
+      weightedCount += credit;
+
+      semSimpleSum += grade;
+      semCount += 1;
+    });
+
+    const semAvgEl = document.getElementById('semAvg_' + sem.key);
+    if(semAvgEl){
+      semAvgEl.textContent = semCount > 0 ? (semCount + '과목 · 평균 ' + (semSimpleSum/semCount).toFixed(2)) : '';
+    }
+  });
+
+  const simpleEl = document.getElementById('computedAvgSimple');
+  const weightedEl = document.getElementById('computedAvgWeighted');
+  const countEl = document.getElementById('computedCount');
+
+  if(simpleCount <= 0){
+    simpleEl.textContent = '–';
+    weightedEl.textContent = '–';
+    countEl.textContent = '과목수 0개 — 1개 이상 추가하세요';
+    return;
+  }
+
+
+  const simpleAvg = simpleSum / simpleCount;
+  const weightedAvg = weightedCount > 0 ? (weightedSum / weightedCount) : simpleAvg;
+
+  simpleEl.textContent = simpleAvg.toFixed(2) + '등급';
+  weightedEl.textContent = weightedAvg.toFixed(2) + '등급';
+  countEl.textContent = '총 과목 ' + simpleCount + '개 · 총 이수단위 ' + weightedCount + '단위';
+
+  document.getElementById('gradeInputGG').value = simpleAvg.toFixed(3);
+  document.getElementById('gradeInputBusan').value = weightedAvg.toFixed(3);
+  calculate();
+}
+
+// ===== 브라우저(localStorage) 저장/불러오기 =====
+const STORAGE_KEY = 'gradeCalc_state_v1';
+
+function collectRows(){
+  const rows = [];
+  SEMESTERS.forEach(sem => {
+    document.querySelectorAll('#subjectRows_' + sem.key + ' tr').forEach(tr => {
+      rows.push({
+        semester: sem.key,
+        name: tr.querySelector('input[type=text]').value,
+        grade: tr.querySelector('select').value,
+        credit: tr.querySelector('input[type=number]').value
+      });
+    });
+  });
+  return rows;
+}
+
+function saveStateToLocal(){
+  const state = {
+    mode: document.getElementById('btnModeSubject').classList.contains('active') ? 'subject' : 'direct',
+    rows: collectRows(),
+    gradeInputBusan: document.getElementById('gradeInputBusan').value,
+    gradeInputGG: document.getElementById('gradeInputGG').value,
+    savedAt: new Date().toISOString()
+  };
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return state;
+  }catch(e){
+    return null;
+  }
+}
+
+function loadStateFromLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+
+function applyState(state){
+  SEMESTERS.forEach(sem => {
+    const tb = document.getElementById('subjectRows_' + sem.key);
+    if(tb) tb.innerHTML = '';
+  });
+  (state.rows || []).forEach(r => addSubjectRow(r.semester || '11', r.name, r.grade, r.credit));
+
+  const anyRows = document.querySelectorAll('.subject-table tbody tr').length > 0;
+  if(!anyRows){
+    fillDefaultSixRowsOnly();
+  }
+
+  if(state.gradeInputBusan) document.getElementById('gradeInputBusan').value = state.gradeInputBusan;
+  if(state.gradeInputGG) document.getElementById('gradeInputGG').value = state.gradeInputGG;
+
+  if(state.mode === 'direct'){
+    btnModeDirect.click();
+  } else {
+    btnModeSubject.click();
+  }
+  computeSubjectAverage();
+}
+
+function fillDefaultSixRowsOnly(){
+  const defaults = [
+    ['국어', 1, 4], ['영어', 1, 4], ['수학', 1, 4],
+    ['통합사회', 1, 3], ['통합과학', 1, 3]
+  ];
+  ['11', '12', '21'].forEach(semKey => {
+    defaults.forEach(([name, grade, credit]) => addSubjectRow(semKey, name, grade, credit));
+  });
+}
+
+function updateStorageStatus(msg){
+  document.getElementById('storageStatus').textContent = msg;
+}
+
+document.getElementById('btnSaveLocal').addEventListener('click', () => {
+  const state = saveStateToLocal();
+  if(state){
+    updateStorageStatus('✓ 저장됨 (' + new Date(state.savedAt).toLocaleString('ko-KR') + ') — 다음에 이 브라우저에서 열면 자동으로 불러옵니다.');
+  } else {
+    updateStorageStatus('저장에 실패했습니다. 브라우저 설정(쿠키/저장소 차단 여부)을 확인해주세요.');
+  }
+});
+
+document.getElementById('btnClearLocal').addEventListener('click', () => {
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  updateStorageStatus('저장된 값을 삭제했습니다. (현재 화면 값은 그대로 유지되며, 다음 방문 시에는 기본값으로 시작합니다)');
+});
+
+// ===== 이미지로 저장 =====
+document.getElementById('btnSaveImage').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveImage');
+  btn.disabled = true;
+  btn.textContent = '이미지 생성 중…';
+  try{
+    updateShareCard();
+    const node = document.getElementById('shareCard');
+    const canvas = await html2canvas(node, {scale: 2, backgroundColor: '#f6f2e9', useCORS: true});
+    const link = document.createElement('a');
+    link.download = '5등급제_9등급제_환산결과.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e){
+    alert('이미지 생성에 실패했습니다: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🖼 이미지로 저장';
+  }
+});
+
+function updateShareCard(){
+  document.getElementById('scDate').textContent = new Date().toLocaleString('ko-KR');
+
+  const rows = collectRows();
+  const semLabelMap = {};
+  SEMESTERS.forEach(s => semLabelMap[s.key] = s.label);
+
+  const lines = [];
+  SEMESTERS.forEach(sem => {
+    const semRows = rows.filter(r => r.semester === sem.key);
+    if(semRows.length === 0) return;
+    const items = semRows.map(r => (r.name || '(이름없음)') + ' ' + r.grade + '등급(' + r.credit + '학점)').join(', ');
+    lines.push('<strong>' + sem.label + '</strong> — ' + items);
+  });
+  document.getElementById('scSubjects').innerHTML = lines.length ? lines.join('<br>') : '(과목별 입력 없음 — 직접 입력 모드)';
+
+  document.getElementById('scAvgSimple').textContent = document.getElementById('computedAvgSimple').textContent;
+  document.getElementById('scAvgWeighted').textContent = document.getElementById('computedAvgWeighted').textContent;
+
+  document.getElementById('scBusanStage1').textContent = document.getElementById('busanStage1Grade').textContent;
+  document.getElementById('scBusanStage1Pct').textContent = document.getElementById('busanStage1Pct').textContent;
+  document.getElementById('scGgStage1').textContent = document.getElementById('ggStage1Grade').textContent;
+  document.getElementById('scGgStage1Pct').textContent = document.getElementById('ggStage1Pct').textContent;
+  document.getElementById('scSimple').textContent = document.getElementById('simpleGrade').textContent;
+  document.getElementById('scSimplePct').textContent = document.getElementById('simplePct').textContent;
+  document.getElementById('scEst').textContent = document.getElementById('estGrade').textContent;
+  document.getElementById('scEstPct').textContent = document.getElementById('estPct').textContent;
+
+  document.getElementById('scUniHumanGyo').innerHTML = document.getElementById('uniHumanGyo').innerHTML;
+  document.getElementById('scUniHumanJong').innerHTML = document.getElementById('uniHumanJong').innerHTML;
+  document.getElementById('scUniNatGyo').innerHTML = document.getElementById('uniNatGyo').innerHTML;
+  document.getElementById('scUniNatJong').innerHTML = document.getElementById('uniNatJong').innerHTML;
+}
+
+// ===== 초기 로드: 저장된 값이 있으면 불러오고, 없으면 기본값 =====
+const btnModeSubject = document.getElementById('btnModeSubject');
+const btnModeDirect = document.getElementById('btnModeDirect');
+const subjectPanel = document.getElementById('subjectPanel');
+const directPanel = document.getElementById('directPanel');
+
+btnModeSubject.addEventListener('click', () => {
+  btnModeSubject.classList.add('active');
+  btnModeDirect.classList.remove('active');
+  subjectPanel.style.display = '';
+  directPanel.style.display = 'none';
+  computeSubjectAverage();
+});
+
+btnModeDirect.addEventListener('click', () => {
+  btnModeDirect.classList.add('active');
+  btnModeSubject.classList.remove('active');
+  directPanel.style.display = '';
+  subjectPanel.style.display = 'none';
+  calculate();
+});
+
+document.getElementById('semesterBlocks').addEventListener('input', computeSubjectAverage);
+document.getElementById('semesterBlocks').addEventListener('change', computeSubjectAverage);
+
+document.getElementById('btnQuickFill').addEventListener('click', () => {
+  SEMESTERS.forEach(sem => {
+    const tb = document.getElementById('subjectRows_' + sem.key);
+    if(tb) tb.innerHTML = '';
+  });
+  fillDefaultSixRowsOnly();
+  computeSubjectAverage();
+});
+
+document.getElementById('btnClearAll').addEventListener('click', () => {
+  SEMESTERS.forEach(sem => {
+    const tb = document.getElementById('subjectRows_' + sem.key);
+    if(tb) tb.innerHTML = '';
+  });
+  computeSubjectAverage();
+});
+
+buildSemesterBlocks();
+
+(function init(){
+  const saved = loadStateFromLocal();
+  if(saved){
+    applyState(saved);
+    updateStorageStatus('저장된 값을 불러왔습니다 (' + new Date(saved.savedAt).toLocaleString('ko-KR') + ' 저장분).');
+  } else {
+    fillDefaultSixRowsOnly();
+    computeSubjectAverage();
+    updateStorageStatus('아직 브라우저에 저장된 값이 없습니다. "이 브라우저에 저장" 버튼을 누르면 다음에 열 때 자동으로 불러옵니다.');
+  }
+  updateShareCard();
+})();
+
+
+</script>
+</body>
+</html>
