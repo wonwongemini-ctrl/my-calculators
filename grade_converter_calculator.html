@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5등급제 → 9등급제 환산 계산기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#1c2b3a;
+    --paper:#f6f2e9;
+    --paper-deep:#efe8d8;
+    --gold:#a97a2f;
+    --gold-soft:#c99a4f;
+    --line:#cbbfa1;
+    --danger:#8a3324;
+    --good:#2f5d4f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    line-height:1.6;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{
+    border-bottom:3px solid var(--ink);
+    padding-bottom:20px;
+    margin-bottom:36px;
+  }
+  header .kicker{
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--gold);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:30px;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:14.5px;
+    color:#4a4237;
+    max-width:60ch;
+  }
+
+  .input-block{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:26px 28px;
+    margin-bottom:30px;
+    box-shadow: 3px 3px 0 var(--paper-deep);
+  }
+  .input-block label{
+    display:block;
+    font-size:14px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .input-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  input[type=number]{
+    font-size:22px;
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    width:140px;
+    padding:10px 12px;
+    border:2px solid var(--ink);
+    border-radius:2px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input[type=number]:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .hint{
+    font-size:12.5px;
+    color:#6b6255;
+    margin-top:10px;
+  }
+  .range-note{
+    font-size:12.5px;
+    color:var(--danger);
+    margin-top:6px;
+    display:none;
+  }
+
+  .results{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-bottom:28px;
+  }
+  @media (max-width:600px){ .results{grid-template-columns:1fr;} }
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:22px 22px 20px;
+    position:relative;
+  }
+  .card.simple{border-top:4px solid var(--good);}
+  .card.estimate{border-top:4px solid var(--gold);}
+  .card .tag{
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.01em;
+    color:#6b6255;
+    margin-bottom:4px;
+  }
+  .card h2{
+    font-family:'Noto Serif KR', serif;
+    font-size:17px;
+    margin:0 0 16px;
+  }
+  .big-number{
+    font-family:'Noto Serif KR', serif;
+    font-size:44px;
+    font-weight:700;
+    line-height:1;
+    margin-bottom:6px;
+  }
+  .card.simple .big-number{color:var(--good);}
+  .card.estimate .big-number{color:var(--gold);}
+  .sub{
+    font-size:13px;
+    color:#4a4237;
+    margin-bottom:14px;
+  }
+  .meta-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:12.5px;
+    color:#6b6255;
+    border-top:1px dashed var(--line);
+    padding-top:10px;
+  }
+
+  .method{
+    background:var(--paper-deep);
+    border:1px solid var(--line);
+    padding:18px 22px;
+    font-size:13px;
+    color:#4a4237;
+    margin-bottom:16px;
+  }
+  .method summary{
+    cursor:pointer;
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+  .method .body{margin-top:12px;}
+  .method code{
+    background:#fff;
+    padding:1px 6px;
+    border:1px solid var(--line);
+    font-size:12px;
+  }
+
+  .caveat{
+    border-left:3px solid var(--danger);
+    background:#fff;
+    padding:14px 18px;
+    font-size:13px;
+    color:#4a2c25;
+    margin-bottom:36px;
+  }
+  .caveat strong{color:var(--danger);}
+
+  footer{
+    font-size:11.5px;
+    color:#847a68;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">부산광역시교육청 관내 고교 5등급제 누적 등급평균 분석자료 기반</div>
+    <h1>5등급제 → 9등급제 환산 계산기</h1>
+    <p>1학년 1학기~2학년 1학기(3개 학기) 누적 5등급제 등급평균을 입력하면, ① 현재 시점(2학년1학기) 기준 9등급제 환산값과 ② 3학년1학기까지의 추세 연장 추정값을 함께 보여줍니다.</p>
+  </header>
+
+  <div class="input-block">
+    <label for="gradeInput">1~2학년1학기 누적 5등급제 등급평균 (12과목 등급 합 기준)</label>
+    <div class="input-row">
+      <input type="number" id="gradeInput" min="1" max="5" step="0.01" value="1.50">
+      <span style="font-size:13px;color:#6b6255;">1.00(전 과목 1등급) ~ 5.00(전 과목 5등급) 사이 값</span>
+    </div>
+    <div class="hint">예: 1.50 = 12개 과목 석차등급 합 18, 평균 1.50등급</div>
+    <div class="range-note" id="rangeNote">입력값은 1.00~5.00 범위여야 합니다.</div>
+  </div>
+
+  <div class="results">
+    <div class="card simple">
+      <div class="tag">MODE A · 단순 변환</div>
+      <h2>2학년1학기 데이터 기준</h2>
+      <div class="big-number" id="simpleGrade">–</div>
+      <div class="sub" id="simpleSub">9등급제 환산 등급평균</div>
+      <div class="meta-row">
+        <span>누적비(상위)</span>
+        <span id="simplePct">–</span>
+      </div>
+    </div>
+
+    <div class="card estimate">
+      <div class="tag">MODE B · 추세 연장 추정</div>
+      <h2>3학년1학기까지 추정</h2>
+      <div class="big-number" id="estGrade">–</div>
+      <div class="sub" id="estSub">9등급제 환산 등급평균 (추정)</div>
+      <div class="meta-row">
+        <span>추정 누적비(상위)</span>
+        <span id="estPct">–</span>
+      </div>
+    </div>
+  </div>
+
+  <details class="method">
+    <summary>계산 방식 자세히 보기</summary>
+    <div class="body">
+      <p><strong>MODE A (단순 변환)</strong>: 입력한 등급평균을 부산교육청 2학년1학기 누적 실측 자료(98개교, 15,978명)의 등급평균–누적비 표에서 선형보간하여 누적비를 구하고, 같은 누적비를 9등급제 환산표(24학년도 고3, 15,670명 기준)에 대응시킨 값입니다. 이는 <strong>실측 데이터를 그대로 매칭</strong>한 결과입니다.</p>
+      <p><strong>MODE B (추정 변환)</strong>: 같은 등급평균 지점에서 1~2학기 누적비(B)와 1~2학년1학기 누적비(C)를 구해 학기당 변화율 <code>r = C / B</code>를 계산합니다. 이 변화율이 앞으로 2개 학기(2학년2학기, 3학년1학기)에도 동일하게 유지된다고 가정하고 <code>추정 누적비 = C × r²</code>로 3학년1학기 누적비를 추정한 뒤, 같은 9등급제 환산표에 대응시킵니다.</p>
+      <p>이 방식을 등급평균 1.00 지점에 적용하면 추정 누적비는 약 0.19%로 계산되며, 이는 부산교육청 자료에 실제로 명시된 "3학년1학기까지 등급평균 1.00 유지 학생 0.2%~0.4% 예상"이라는 공식 추정과 근접합니다. 다만 이 공식 추정치는 단순 수치 추세 연장이 아니라 고교학점제 이수인원 감소, 학기별 경쟁 심화 등 구조적 요인을 함께 고려한 것이므로, 계산기의 추정값과 정확히 일치하지는 않을 수 있습니다.</p>
+    </div>
+  </details>
+
+  <div class="caveat">
+    <strong>주의</strong> — Mode B는 3개 시점(1학기, 1~2학기, 1~2학년1학기)의 변화 패턴만으로 산출한 통계적 추세 연장이며, 공식 발표 수치가 아닙니다. 특히 최상위 구간(등급평균 1.0대 초반)에서는 표본이 매우 적어 추정 오차가 커질 수 있습니다. 참고용으로만 활용하시고, 실제 입시 상담은 학교 및 공식 자료를 함께 확인하시기 바랍니다.
+  </div>
+
+  <footer>
+    출처: 부산광역시교육청학력개발원 진로진학지원센터, 「관내 고교 5등급제 2학년1학기 누적 등급평균 분석 자료」 (現 고2, 98개교 15,978명 / 9등급제 비교군: 24학년도 고3, 94개교 15,670명)
+  </footer>
+
+</div>
+
+<script>
+// 부산교육청 자료 — 5등급제 등급평균 anchor points
+const gradeAnchors = [1.00,1.16,1.33,1.50,1.66,1.83,2.00,2.16,2.33,2.50,2.66,2.83,3.00,3.16,3.33,3.50,3.66,3.83,4.00,4.16,4.33,4.50,4.66,4.83,5.00];
+
+// 1~2학기(고1) 누적비(%) — column B
+const Bvals = [1.30,2.76,4.81,7.08,9.51,13.03,17.42,21.04,26.02,31.39,36.58,42.93,49.98,55.84,62.84,69.09,74.08,79.74,84.90,88.48,91.75,94.07,95.66,97.03,100.00];
+
+// 1~2학년1학기 누적비(%) — column C
+const Cvals = [0.68,2.23,4.29,6.49,8.89,12.41,16.58,20.64,25.45,31.00,36.37,42.75,49.96,56.15,62.92,69.29,74.93,80.30,85.54,89.21,92.51,94.58,96.16,97.48,100.00];
+
+// 누적비(%) -> 9등급제 환산 등급평균 (2학년1학기 실측 + 등급평균1.00 구간 공식 예상치 포함)
+const pcts   = [0.20,0.30,0.40,0.68,1.01,1.40,2.23,3.16,4.29,5.44,6.49,8.89,12.41,16.58,20.64,25.45,31.00,36.37,42.75,49.96,56.15,62.92,69.29,74.93,80.30,85.54,89.21,92.51,94.58,96.16,97.48,100.00];
+const grade9 = [1.09,1.15,1.19,1.28,1.38,1.47,1.68,1.87,2.07,2.25,2.39,2.66,2.98,3.30,3.58,3.87,4.18,4.45,4.72,5.03,5.30,5.58,5.87,6.12,6.40,6.71,6.99,7.28,7.54,7.80,8.12,9.00];
+
+function interp(x, xs, ys){
+  if(x <= xs[0]) return ys[0];
+  if(x >= xs[xs.length-1]) return ys[ys.length-1];
+  for(let i=0;i<xs.length-1;i++){
+    if(x >= xs[i] && x <= xs[i+1]){
+      const t = (x - xs[i]) / (xs[i+1] - xs[i]);
+      return ys[i] + t * (ys[i+1] - ys[i]);
+    }
+  }
+  return ys[ys.length-1];
+}
+
+function fmtPct(p){
+  if(p < 1) return p.toFixed(2) + '%';
+  return p.toFixed(2) + '%';
+}
+
+function calculate(){
+  const input = document.getElementById('gradeInput');
+  const rangeNote = document.getElementById('rangeNote');
+  let g = parseFloat(input.value);
+
+  if(isNaN(g)){ return; }
+
+  if(g < 1.00 || g > 5.00){
+    rangeNote.style.display = 'block';
+    g = Math.min(Math.max(g,1.00),5.00);
+  } else {
+    rangeNote.style.display = 'none';
+  }
+
+  // Mode A: 현재(2-1) 누적비 -> 9등급 환산
+  const C = interp(g, gradeAnchors, Cvals);
+  const simpleGrade9 = interp(C, pcts, grade9);
+
+  document.getElementById('simplePct').textContent = '상위 ' + fmtPct(C);
+  document.getElementById('simpleGrade').textContent = simpleGrade9.toFixed(2) + '등급';
+
+  // Mode B: B -> C 변화율을 2개 학기 더 연장
+  const B = interp(g, gradeAnchors, Bvals);
+  const ratio = B > 0 ? (C / B) : 1;
+  let estPct = C * ratio * ratio;
+  // 하한/상한 안전장치
+  estPct = Math.max(estPct, 0.05);
+  estPct = Math.min(estPct, 100);
+
+  const estGrade9 = interp(estPct, pcts, grade9);
+
+  document.getElementById('estPct').textContent = '상위 ' + fmtPct(estPct);
+  document.getElementById('estGrade').textContent = estGrade9.toFixed(2) + '등급';
+}
+
+document.getElementById('gradeInput').addEventListener('input', calculate);
+calculate();
+</script>
+</body>
+</html>
