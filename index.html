@@ -1,55 +1,34 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>나의 계산기 모음</title>
+<meta name="description" content="학교운영위원회 업무 도우미, 고등학교 등급 계산기, 공기업 서류전형 점수 계산기 모음">
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;background:#f6f7fb;color:#1f2937}
-.wrap{max-width:900px;margin:auto;padding:60px 20px}
-header{text-align:center;margin-bottom:42px}
-h1{margin:0 0 12px;font-size:38px}
-.subtitle{margin:0;color:#6b7280;font-size:17px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
-.card{background:white;border:1px solid #e5e7eb;border-radius:18px;padding:26px;box-shadow:0 6px 20px rgba(0,0,0,.05)}
-.icon{font-size:34px;margin-bottom:14px}
-h2{margin:0 0 9px;font-size:21px}
-.desc{min-height:48px;margin:0 0 20px;color:#6b7280;line-height:1.55;font-size:14px}
-.btn{display:block;text-align:center;padding:12px 16px;border-radius:10px;background:#111827;color:white;text-decoration:none;font-weight:600}
-footer{text-align:center;margin-top:45px;color:#9ca3af;font-size:13px}
-</style>
-</head>
-<body>
-<div class="wrap">
-<header>
-<h1>🧮 나의 계산기 모음</h1>
-<p class="subtitle">필요한 계산기를 선택해서 바로 사용하세요.</p>
-</header>
-<main class="grid">
-<section class="card">
-<div class="icon">💼</div>
-<h2>공기업 서류 패스 계산기</h2>
-<p class="desc">공기업 서류전형 점수를 간편하게 계산해 보세요.</p>
-<a class="btn" href="public-enterprise-pass.html">계산기 열기 →</a>
-</section>
-<section class="card">
-<div class="icon">🎓</div>
-<h2>고등학생 등급 계산기</h2>
-<p class="desc">학생의 등급과 관련된 점수를 편리하게 계산해 보세요.</p>
-<a class="btn" href="grade_cut_calculator.html">계산기 열기 →</a>
-</section>
-<section class="card">
-<div class="icon">📊</div>
-<h2>등급 예측 계산기</h2>
-<p class="desc">입력한 자료를 바탕으로 등급을 예측해 보세요.</p>
-<a class="btn" href="grade_predictor.html">계산기 열기 →</a>
-<h2>5등급 9등급 변환기(부산 2학년 1학기 누적등급 평균비율)</h2>
-<p class="desc">입력한 자료를 바탕으로 등급을 예측해 보세요.</p>
-<a class="btn" href="grade_converter_calculator (2).html">계산기 열기 →</a>
-</section>
-</main>
-<footer>© 2026 나의 계산기 모음</footer>
-</div>
-</body>
-</html>
+:root{--bg:#f4f5f7;--ink:#1d2433;--mute:#5b6475;--card:#fff;--rule:#d9dde5;--hl:#d8f74a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181e;--ink:#e8ebf1;--mute:#9aa3b5;--card:#1e222a;--rule:#2f3542}}
+:root[data-theme="dark"]{--bg:#15181e;--ink:#e8ebf1;--mute:#9aa3b5;--card:#1e222a;--rule:#2f3542}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,"Malgun Gothic",sans-serif;line-height:1.6}
+main{max-width:720px;margin:0 auto;padding:40px 16px}
+h1{font-size:24px;margin:0 0 6px}p{color:var(--mute);margin:0 0 20px}
+h2{font-size:15px;color:var(--mute);margin:28px 0 10px}
+a.card{display:block;background:var(--card);border:1px solid var(--rule);border-left:6px solid var(--hl);border-radius:10px;padding:18px 20px;color:inherit;text-decoration:none;margin-bottom:12px}
+a.card:hover{border-color:var(--ink)}a.card b{font-size:18px}a.card span{display:block;color:var(--mute);font-size:14px;margin-top:4px}
+footer{font-size:13px;color:var(--mute);margin-top:28px}footer a{color:inherit}
+</style></head>
+<body><main>
+<h1>나의 계산기 모음</h1>
+<p>필요한 도구를 골라 바로 쓰세요. 모두 브라우저 안에서만 동작하며 입력한 정보를 어디로도 보내지 않습니다.</p>
+
+<h2>학교운영위원회</h2>
+<a class="card" href="schoolboard.html"><b>학운위 운영업무 도우미</b><span>연중 · 회의 개최·진행·결과 공문과 공고, 명패·안건 인덱스·봉투 라벨, 기한 점검</span></a>
+<a class="card" href="https://wonwongemini-ctrl.github.io/school/hakwoonwi/"><b>학운위 구성 도우미</b><span>매년 2~4월 · 일정만 넣으면 구성 단계별 기안문(ODT)과 업무편람 별지 서식(HWPX)을 한 번에 · 경기 공립 초등 기준</span></a>
+
+<h2>고등학교 성적·입시</h2>
+<a class="card" href="grade_cut_calculator.html"><b>등급 컷 추정기</b><span>과목 평균과 성취도 분포로 목표 상위 %의 예상 총점, 지필고사 필요 점수 계산</span></a>
+<a class="card" href="grade_converter_calculator%20(2).html"><b>5등급제 → 9등급제 환산 계산기</b><span>부산 관내 고교 누적 등급평균 분석자료 기반 · 과목별 입력, 학기별 추세 연장 추정</span></a>
+<a class="card" href="grade_predictor.html"><b>졸업생 반영 수능 등급 계산기</b><span>모의고사 백분위에 졸업생·검정고시 응시자 합류 효과를 반영한 수능 예상 등급</span></a>
+
+<h2>취업</h2>
+<a class="card" href="public-enterprise-pass.html"><b>공기업 서류전형 점수 계산기</b><span>자격증·어학 점수로 서류전형 합계 계산 · 한국지역난방공사, 인천국제공항공사, 한국전력공사, 한국마사회</span></a>
+
+<footer>© 2026 나의 계산기 모음 · 결과는 참고용입니다</footer>
+</main></body></html>
